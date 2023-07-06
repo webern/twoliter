@@ -5,6 +5,7 @@ use clap::Parser;
 mod cmd;
 mod common;
 mod docker;
+mod embed;
 mod project;
 
 /// Test code that should only be compiled when running tests.

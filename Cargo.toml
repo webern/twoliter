@@ -13,9 +13,18 @@ anyhow = "1"
 async-recursion = "1"
 clap = { version = "4", features = ["derive", "env", "std"] }
 env_logger = "0.10"
+flate2 = "1"
 log = "0.4"
+nix = "0.26"
 serde = { version = "1", features = ["derive"] }
 serde_plain = "1"
+tar = "0.4"
 tempfile = "3"
-tokio = { version = "1", default-features = false, features = ["fs", "macros", "process", "rt-multi-thread"] }
+tokio = { version = "1", default-features = false, features = ["fs", "macros", "process", "rt-multi-thread", "time"] }
 toml = "0.7"
+
+[build-dependencies]
+buildsys = { version = "0.1.0", artifact = [ "bin:buildsys", "bin:bottlerocket-variant" ], path = ".ignore/hack/bottlerocket/tools/buildsys" }
+flate2 = "1"
+tar = "0.4"
+tempfile = "3"

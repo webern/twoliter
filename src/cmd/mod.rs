@@ -1,33 +1,53 @@
-mod args;
+mod build;
+mod exec;
 
-pub(crate) use self::args::{Args, Subcommand};
+use crate::cmd::build::BuildCommand;
 use anyhow::Result;
+use clap::Parser;
 use env_logger::Builder;
+use exec::Exec;
 use log::LevelFilter;
 
-const DEFAULT_LEVEL_FILTER: LevelFilter = LevelFilter::Warn;
+/// A tool for building custom variants of Bottlerocket.
+#[derive(Debug, Parser)]
+#[clap(about, long_about = None)]
+pub(crate) struct Args {
+    #[clap(long = "log-level", default_value = "warn")]
+    pub(crate) log_level: LevelFilter,
+
+    #[clap(subcommand)]
+    pub(crate) subcommand: Subcommand,
+}
+
+#[derive(Debug, Parser)]
+pub(crate) enum Subcommand {
+    #[clap(subcommand)]
+    Build(BuildCommand),
+
+    Exec(Exec),
+}
 
 /// Entrypoint for the `twoliter` command line program.
 pub(super) async fn run(args: Args) -> Result<()> {
     match args.subcommand {
         Subcommand::Build(build_command) => build_command.run().await,
+        Subcommand::Exec(exec_command) => exec_command.run().await,
     }
 }
 
-/// use `level` if present, or else use `RUST_LOG` if present, or else use a default.
-pub(super) fn init_logger(level: Option<LevelFilter>) {
-    match (std::env::var(env_logger::DEFAULT_FILTER_ENV).ok(), level) {
-        (Some(_), None) => {
-            // RUST_LOG exists and level does not; use the environment variable.
+/// Initialize the logger with the value passed by `--log-level` (or its default) when the
+/// `RUST_LOG` environment variable is not present. If present, the `RUST_LOG` environment variable
+/// overrides `--log-level`/`level`.
+pub(super) fn init_logger(level: LevelFilter) {
+    match std::env::var(env_logger::DEFAULT_FILTER_ENV).ok() {
+        Some(_) => {
+            // RUST_LOG exists; env_logger will use it.
             Builder::from_default_env().init();
         }
-        _ => {
-            // use provided log level or default for this crate only.
+        None => {
+            // RUST_LOG does not exist; use provided log level for this crate only.
             Builder::new()
-                .filter(
-                    Some(env!("CARGO_CRATE_NAME")),
-                    level.unwrap_or(DEFAULT_LEVEL_FILTER),
-                )
+                .filter(Some(env!("CARGO_CRATE_NAME")), level)
                 .init();
         }
     }
