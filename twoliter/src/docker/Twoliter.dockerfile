@@ -10,5 +10,4 @@ RUN echo '{"auths": {}}' > /local/.docker/config.json \
 ENV DOCKER_CONFIG=/local/.docker
 
 USER builder
-COPY --chmod=755 buildsys /usr/local/bin
 COPY --chmod=644 Makefile.toml /local

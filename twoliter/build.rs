@@ -27,13 +27,6 @@ fn main() {
     )
     .unwrap();
 
-    // Copy built Rust binary artifacts.
-    // fs::copy(tools_dir.join(buildsys), tar_dir.join("buildsys")).unwrap();
-    let buildsys_artifact = PathBuf::from(env::var("CARGO_BIN_FILE_BUILDSYS_buildsys").unwrap())
-        .canonicalize()
-        .unwrap();
-    fs::copy(&buildsys_artifact, tools_dir.join("buildsys")).unwrap();
-
     // Create tarball
     let tar_gz = File::create(&tar_path).unwrap();
     let enc = GzEncoder::new(&tar_gz, Compression::default());
