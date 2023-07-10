@@ -1,12 +1,26 @@
 use crate::docker::{ImageArchUri, DEFAULT_REGISTRY, DEFAULT_SDK_NAME, DEFAULT_SDK_VERSION};
 use anyhow::{ensure, Context, Result};
 use async_recursion::async_recursion;
-use log::trace;
+use log::{debug, trace};
 use serde::de::Error;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::fmt;
 use std::path::{Path, PathBuf};
 use tokio::fs;
+
+/// Common functionality in commands, if the user gave a path to the `Twoliter.toml` file,
+/// we use it, otherwise we search for the file. Returns the `Project` and the path at which it was
+/// found (this is the same as `user_path` if provided).
+pub(crate) async fn load_or_find_project(user_path: Option<PathBuf>) -> Result<(Project, PathBuf)> {
+    match user_path {
+        None => {
+            let (project, path) = Project::find_and_load(".").await?;
+            debug!("Project file loaded from '{}'", path.display());
+            Ok((project, path))
+        }
+        Some(p) => Ok((Project::load(&p).await?, p)),
+    }
+}
 
 /// Represents the structure of a `Twoliter.toml` project file.
 #[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
