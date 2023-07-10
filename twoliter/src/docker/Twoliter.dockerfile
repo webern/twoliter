@@ -2,4 +2,5 @@
 ARG BASE
 FROM ${BASE} as base
 
-COPY --chmod=755 buildsys /usr/local/bin
+RUN mkdir -p /home/builder/tools
+COPY --chown=builder:builder --chmod=755 ./files/ /home/builder/tools/

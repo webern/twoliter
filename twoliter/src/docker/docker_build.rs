@@ -2,7 +2,7 @@ use crate::common::exec;
 use crate::docker::ImageUri;
 use anyhow::Result;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::process::Command;
 
 /// Can execute a `docker build` command. This follows the builder pattern, for example:
@@ -30,14 +30,14 @@ impl Default for DockerBuild {
 
 impl DockerBuild {
     /// Add a value for the `--file` argument.
-    pub(crate) fn dockerfile<P: Into<PathBuf>>(mut self, dockerfile: P) -> Self {
-        self.dockerfile = Some(dockerfile.into());
+    pub(crate) fn dockerfile(mut self, dockerfile: impl AsRef<Path>) -> Self {
+        self.dockerfile = Some(dockerfile.as_ref().into());
         self
     }
 
     /// Required: the directory to be passed to the build as the context.
-    pub(crate) fn context_dir<P: Into<PathBuf>>(mut self, context_dir: P) -> Self {
-        self.context_dir = context_dir.into();
+    pub(crate) fn context_dir(mut self, context_dir: impl AsRef<Path>) -> Self {
+        self.context_dir = context_dir.as_ref().into();
         self
     }
 
