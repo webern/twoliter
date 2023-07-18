@@ -1,6 +1,8 @@
 mod build;
+mod exec;
 
 use self::build::BuildCommand;
+use crate::cmd::exec::Exec;
 use anyhow::Result;
 use clap::Parser;
 use env_logger::Builder;
@@ -27,12 +29,15 @@ pub(crate) enum Subcommand {
     /// Build something, such as a Bottlerocket image or a kit of packages.
     #[clap(subcommand)]
     Build(BuildCommand),
+
+    Exec(Exec),
 }
 
 /// Entrypoint for the `twoliter` command line program.
 pub(super) async fn run(args: Args) -> Result<()> {
     match args.subcommand {
         Subcommand::Build(build_command) => build_command.run().await,
+        Subcommand::Exec(exec_args) => exec_args.run().await,
     }
 }
 

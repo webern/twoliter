@@ -2,7 +2,7 @@ mod commands;
 mod image;
 mod twoliter;
 
-pub(crate) use self::commands::DockerBuild;
+pub(crate) use self::commands::{DockerBuild, DockerRun, Mount};
 pub(crate) use self::image::{ImageArchUri, ImageUri};
 pub(crate) use self::twoliter::create_twoliter_image_if_not_exists;
 
