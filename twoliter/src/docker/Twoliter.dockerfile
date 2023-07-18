@@ -2,5 +2,5 @@
 ARG BASE
 FROM ${BASE} as base
 
-RUN mkdir -p /home/builder/tools
-COPY --chown=builder:builder --chmod=755 ./files/ /home/builder/tools/
+RUN mkdir -p /twoliter/tools
+COPY --chown=builder:builder --chmod=755 ./files/Makefile.toml /twoliter/tools/Makefile.toml
