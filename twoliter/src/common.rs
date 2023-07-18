@@ -8,7 +8,7 @@ pub(crate) async fn exec(cmd: &mut Command) -> Result<()> {
 
     match log::max_level() {
         // For non-debugging levels of logging we capture stdout and stderr
-        LevelFilter::Off | LevelFilter::Error | LevelFilter::Warn | LevelFilter::Info => {
+        LevelFilter::Off | LevelFilter::Error | LevelFilter::Warn => {
             let output = cmd
                 .output()
                 .await
@@ -24,7 +24,7 @@ pub(crate) async fn exec(cmd: &mut Command) -> Result<()> {
         }
 
         // For debugging we stream to stdout and stderr.
-        LevelFilter::Debug | LevelFilter::Trace => {
+        LevelFilter::Info | LevelFilter::Debug | LevelFilter::Trace => {
             let status = cmd
                 .status()
                 .await

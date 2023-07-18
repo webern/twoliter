@@ -8,7 +8,7 @@ use clap::Parser;
 use env_logger::Builder;
 use log::LevelFilter;
 
-const DEFAULT_LEVEL_FILTER: LevelFilter = LevelFilter::Warn;
+const DEFAULT_LEVEL_FILTER: LevelFilter = LevelFilter::Info;
 
 /// A tool for building custom variants of Bottlerocket.
 #[derive(Debug, Parser)]
