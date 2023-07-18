@@ -52,7 +52,7 @@ impl Exec {
             .command_arg("make")
             .command_arg("--disable-check-for-updates")
             .command_arg("--makefile")
-            .command_arg("/local/Makefile.toml")
+            .command_arg("/home/builder/tools/Makefile.toml")
             .command_arg("--cwd")
             .command_arg(project_dir.display().to_string());
 
