@@ -2,6 +2,7 @@
 ARG BASE
 FROM ${BASE} as base
 
+ENV DOCKER_HOME=/home/builder/.docker
 USER root
 RUN mkdir -p /twoliter/tools \
     && chown builder:builder /twoliter/tools \
