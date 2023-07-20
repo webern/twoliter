@@ -9,7 +9,7 @@ cd $REPOS/bottlerocket
 source $REPOS/notes/commands/build-k8s.env
 
 rm -f "${BOTTLEROCKET}/Infra.toml"
-ln -s "${INFRA_TOML}" "${BOTTLEROCKET}/Infra.toml"
+cp "${BOTTLEROCKET}/Infra.toml" "${INFRA_TOML}"
 
 cd "${BOTTLEROCKET}" && cargo make \
   -e TWOLITER_REV=$SHA \
