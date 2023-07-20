@@ -60,7 +60,7 @@ impl Exec {
             .workdir(project_dir.display().to_string())
             .command_arg("cargo")
             .command_arg("make")
-            .command_arg("--log-level=debug")
+            .command_arg("--loglevel=debug")
             .command_arg("--disable-check-for-updates")
             .command_arg("--makefile")
             .command_arg("/twoliter/tools/Makefile.toml")
