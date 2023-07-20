@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -e
 
 cd $REPOS/twoliter
 SHA=$(git rev-parse HEAD)
@@ -6,6 +7,9 @@ SHA=$(git rev-parse HEAD)
 cd $REPOS/bottlerocket
 
 source $REPOS/notes/commands/build-k8s.env
+
+rm -f "${BOTTLEROCKET}/Infra.toml"
+ln -s "${INFRA_TOML}" "${BOTTLEROCKET}/Infra.toml"
 
 cd "${BOTTLEROCKET}" && cargo make \
   -e TWOLITER_REV=$SHA \
