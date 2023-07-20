@@ -66,7 +66,8 @@ impl Exec {
             .command_arg("/twoliter/tools/Makefile.toml")
             .command_arg("--cwd")
             .command_arg(project_dir.display().to_string())
-            ._env("CARGO_LOG", "cargo::core::compiler::fingerprint=info");
+            ._env("CARGO_LOG", "cargo::core::compiler::fingerprint=info")
+            ._env("HOME", "/twoliter");
 
         // TODO - this can panic if non-unicode env
         for (key, val) in std::env::vars() {
