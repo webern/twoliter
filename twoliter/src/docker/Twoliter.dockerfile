@@ -2,7 +2,7 @@
 ARG BASE
 FROM ${BASE} as base
 
-ENV DOCKER_CONFIG=/home/builder/.docker
+ENV DOCKER_CONFIG=/.docker
 USER root
 RUN mkdir -p "${DOCKER_CONFIG}" \
     && chmod 777 "${DOCKER_CONFIG}" \
