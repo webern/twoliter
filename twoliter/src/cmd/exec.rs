@@ -41,11 +41,21 @@ impl Exec {
             ..Default::default()
         };
 
+        // Mount /tmp for processes that use mktmp or otherwise expect to be able to use mount /tmp
+        // in docker run statements.
+        let tmp_dir = std::env::temp_dir();
+        let tmp_mount = Mount {
+            source: tmp_dir.clone(),
+            destination: tmp_dir,
+            ..Default::default()
+        };
+
         let mut docker_command = DockerRun::new(image)
             .remove()
             .name("twoliter-exec")
             .mount(project_mount)
             .mount(socket_mount)
+            .mount(tmp_mount)
             .user(nix::unistd::Uid::effective().to_string())
             .workdir(project_dir.display().to_string())
             .command_arg("cargo")
