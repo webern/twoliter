@@ -847,6 +847,7 @@ dependencies = ["fetch-sdk", "build-tools", "build-sbkeys", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
+export CARGO_LOG=cargo::core::compiler::fingerprint=debug
 
 # Parse the variant into its components and set additional variables.
 eval "$(bottlerocket-variant)"
@@ -861,6 +862,7 @@ export CARGO_TARGET_DIR=${BUILDSYS_ROOT_DIR}/variants/target/${BUILDSYS_ARCH}
 
 rm -rf "${BUILDSYS_OUTPUT_DIR}/latest"
 cargo build \
+  -v \
   ${CARGO_BUILD_ARGS} \
   ${CARGO_MAKE_CARGO_ARGS} \
   --manifest-path variants/${BUILDSYS_VARIANT}/Cargo.toml
