@@ -847,7 +847,7 @@ dependencies = ["fetch-sdk", "build-tools", "build-sbkeys", "publish-setup"]
 script = [
 '''
 export PATH="${BUILDSYS_TOOLS_DIR}/bin:${PATH}"
-export CARGO_LOG=cargo::core::compiler::fingerprint=debug
+export CARGO_LOG=cargo::core::compiler::fingerprint=info
 
 # Parse the variant into its components and set additional variables.
 eval "$(bottlerocket-variant)"
