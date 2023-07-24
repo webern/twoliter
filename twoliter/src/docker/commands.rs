@@ -121,6 +121,19 @@ pub(crate) struct Mount {
 }
 
 impl Mount {
+    /// Create a new `Mount` object, of type `Bind`, with the same external and internal path.
+    /// For example, `Mount::new('/foo')` will create `type=bind,source=/foo,target=foo`.
+    pub(crate) fn new(path: impl AsRef<Path>) -> Self {
+        Self {
+            type_: MountType::Bind,
+            source: path.as_ref().into(),
+            destination: path.as_ref().into(),
+            read_only: false,
+        }
+    }
+
+    /// Express the mount as the value of `docker run` argument, e.g.
+    /// `type=bind,source=/foo,target=foo`.
     fn as_arg(&self) -> String {
         let mut s = format!(
             "type={},source={},target={}",

@@ -16,6 +16,12 @@ pub(crate) struct Exec {
     #[clap(long = "docker-socket", default_value = "/var/run/docker.sock")]
     docker_socket: String,
 
+    /// Additional paths to mount into the container. If any paths, such as your Infra.toml file or
+    /// your sbkeys directory are outside of the project directory, paths to these files and
+    /// directories need to be passed as --mount arguments.
+    #[clap(long = "mount")]
+    mounts: Vec<PathBuf>,
+
     /// Arguments to be passed to cargo make
     cargo_make_args: Vec<String>,
 }
@@ -68,6 +74,10 @@ impl Exec {
             .command_arg(project_dir.display().to_string())
             ._env("CARGO_LOG", "cargo::core::compiler::fingerprint=info")
             ._env("HOME", "/twoliter");
+
+        for mount in &self.mounts {
+            docker_command = docker_command.mount(Mount::new(mount));
+        }
 
         // TODO - this can panic if non-unicode env
         for (key, val) in std::env::vars() {
