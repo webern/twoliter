@@ -104,7 +104,7 @@ impl Exec {
     }
 }
 
-const ENV_VARS: [&str; 12] = [
+const ENV_VARS: [&str; 13] = [
     "ALLOW_MISSING_KEY",
     "AMI_DATA_FILE_SUFFIX",
     "BOOT_CONFIG",
@@ -114,6 +114,7 @@ const ENV_VARS: [&str; 12] = [
     "CARGO_MAKE_TESTSYS_ARGS",
     "CARGO_MAKE_TESTSYS_KUBECONFIG_ARG",
     "MARK_OVA_AS_TEMPLATE",
+    "RELEASE_START_TIME",
     "SSM_DATA_FILE_SUFFIX",
     "VMWARE_IMPORT_SPEC_PATH",
     "VMWARE_VM_NAME_DEFAULT",
