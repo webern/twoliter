@@ -4,6 +4,7 @@ use crate::{docker, project};
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, trace};
+use serde::{Deserialize, Serialize};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -19,67 +20,6 @@ pub(crate) struct Exec {
     /// Path to the docker daemon socket.
     #[clap(long = "docker-socket", default_value = "/var/run/docker.sock")]
     docker_socket: String,
-
-    /// A path used by buildsys.
-    #[clap(long)]
-    buildsys_build_dir: Option<PathBuf>,
-
-    /// A path used by buildsys.
-    #[clap(long)]
-    buildsys_images_dir: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_repo_output_dir: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_repo_root_json: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_ssm_templates: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_wave_policy: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_expiration_policy: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_infra_config: Option<PathBuf>,
-
-    /// A path used by pubsys.
-    #[clap(long)]
-    pubsys_repo_key: Option<PathBuf>,
-
-    /// A path used by testsys.
-    #[clap(long)]
-    testsys_default_kubeconfig: Option<PathBuf>,
-
-    /// A path used by testsys.
-    #[clap(long)]
-    testsys_kubeconfig: Option<PathBuf>,
-
-    /// A path used by testsys.
-    #[clap(long)]
-    testsys_test_config: Option<PathBuf>,
-
-    /// A path used by testsys.
-    #[clap(long)]
-    testsys_tests_dir: Option<PathBuf>,
-
-    /// A path used by the cargo makefile.
-    #[clap(long)]
-    vmware_import_spec: Option<PathBuf>,
-
-    /// Additional paths to mount into the container. If any additional paths need to be mounted,
-    /// use this argument to do so.
-    #[clap(long = "mount")]
-    mounts: Vec<PathBuf>,
 
     /// Cargo make target. E.g. the word "build" if we want to execute `cargo make build`.
     makefile_target: String,
@@ -169,28 +109,7 @@ impl Exec {
         let project_dir = project_dir.as_ref();
         let mut mounts = vec![Mount::new(project_dir)];
 
-        // Shorthand to fit these calls into one line for readability.
-        let m = &mut mounts;
-        let p = project_dir;
-        add(m, &p, &self.buildsys_build_dir, DIR, CREATE).await?;
-        add(m, &p, &self.buildsys_images_dir, DIR, CREATE).await?;
-        add(m, &p, &self.pubsys_expiration_policy, FILE, NO_CREATE).await?;
-        add(m, &p, &self.pubsys_infra_config, FILE, CREATE).await?;
-        add(m, &p, &self.pubsys_repo_key, FILE, CREATE).await?;
-        add(m, &p, &self.pubsys_repo_output_dir, DIR, CREATE).await?;
-        add(m, &p, &self.pubsys_repo_root_json, FILE, CREATE).await?;
-        add(m, &p, &self.pubsys_ssm_templates, FILE, NO_CREATE).await?;
-        add(m, &p, &self.pubsys_wave_policy, FILE, NO_CREATE).await?;
-        add(m, &p, &self.testsys_default_kubeconfig, FILE, NO_CREATE).await?;
-        add(m, &p, &self.testsys_kubeconfig, FILE, CREATE).await?;
-        add(m, &p, &self.testsys_test_config, FILE, NO_CREATE).await?;
-        add(m, &p, &self.testsys_tests_dir, DIR, CREATE).await?;
-        add(m, &p, &self.vmware_import_spec, FILE, NO_CREATE).await?;
-
-        for path in &self.mounts {
-            let path = canonicalize(path)?;
-            mounts.push(Mount::new(path));
-        }
+        // TODO: mount paths if we find any in the args and we need them.
 
         if let Some(testsys_test_path) = find_testsys_test_path(env::args()) {
             let testsys_test_path = canonicalize(testsys_test_path)?;
@@ -272,6 +191,8 @@ async fn add(
     Ok(())
 }
 
+/// A list of environment variables that don't conform to naming convensions, but we need to pass
+/// through to the `cargo make` invocation.
 const ENV_VARS: [&str; 13] = [
     "ALLOW_MISSING_KEY",
     "AMI_DATA_FILE_SUFFIX",
@@ -488,3 +409,124 @@ fn test_find_testsys_test_path_not_found_4() {
     ];
     assert!(find_testsys_test_path(args).is_none())
 }
+
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+enum Target {
+    Setup,
+    SetupBuild,
+    Fetch,
+    FetchSdk,
+    FetchToolchain,
+    FetchSources,
+    UnitTests,
+    Check,
+    CheckFmt,
+    CheckLints,
+    CheckClippy,
+    CheckShell,
+    CheckGolangciLint,
+    CheckMigrations,
+    BuildTools,
+    PublishSetupTools,
+    InfraTools,
+    PublishTools,
+    BuildSbkeys,
+    CheckCargoVersion,
+    BootConfig,
+    ValidateBootConfig,
+    BuildPackage,
+    BuildVariant,
+    CheckLicenses,
+    FetchLicenses,
+    Build,
+    Tuftool,
+    CreateInfra,
+    PublishSetup,
+    PublishSetupWithoutKey,
+    ValidateRepo,
+    CheckRepoExpirations,
+    RefreshRepo,
+    Ami,
+    AmiPublic,
+    AmiPrivate,
+    GrantAmi,
+    RevokeAmi,
+    ValidateAmi,
+    Ssm,
+    PromoteSsm,
+    ValidateSsm,
+    UploadOvaBase,
+    UploadOva,
+    VmwareTemplate,
+    Clean,
+    CleanSources,
+    CleanPackages,
+    CleanImages,
+    CleanRepos,
+    CleanState,
+    PurgeCache,
+    PurgeGoVendor,
+    PurgeCargo,
+    TestTools,
+    SetupTest,
+    Test,
+    CleanTest,
+    ResetTest,
+    UninstallTest,
+    PurgeTest,
+    WatchTest,
+    WatchTestAll,
+    LogTest,
+    Testsys,
+    Default,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+struct PathVar {
+    name: &'static str,
+    r#type: PathType,
+    create: bool,
+}
+
+impl PathVar {
+    /// Shorthand constructor to get (most of) the constants on one line each.
+    const fn new(name: &'static str, r#type: PathType, create: bool) -> Self {
+        Self {
+            name,
+            r#type,
+            create,
+        }
+    }
+}
+
+const BOOT_CONFIG: PathVar = PathVar::new("BOOT_CONFIG", FILE, NO_CREATE);
+const BOOT_CONFIG_INPUT: PathVar = PathVar::new("BOOT_CONFIG_INPUT", DIR, NO_CREATE);
+const BUILDSYS_BUILD_DIR: PathVar = PathVar::new("BUILDSYS_BUILD_DIR", DIR, CREATE);
+const BUILDSYS_IMAGES_DIR: PathVar = PathVar::new("BUILDSYS_IMAGES_DIR", DIR, CREATE);
+const BUILDSYS_KMOD_KIT_PATH: PathVar = PathVar::new("BUILDSYS_KMOD_KIT_PATH", DIR, CREATE);
+const BUILDSYS_LICENSES_CONFIG_PATH: PathVar =
+    PathVar::new("BUILDSYS_LICENSES_CONFIG_PATH", FILE, NO_CREATE);
+const BUILDSYS_METADATA_DIR: PathVar = PathVar::new("BUILDSYS_METADATA_DIR", DIR, CREATE);
+const BUILDSYS_OUTPUT_DIR: PathVar = PathVar::new("BUILDSYS_OUTPUT_DIR", DIR, CREATE);
+const BUILDSYS_OVA_PATH: PathVar = PathVar::new("BUILDSYS_OVA_PATH", FILE, CREATE);
+const BUILDSYS_OVF_TEMPLATE: PathVar = PathVar::new("BUILDSYS_OVF_TEMPLATE", FILE, NO_CREATE);
+const BUILDSYS_PACKAGES_DIR: PathVar = PathVar::new("BUILDSYS_PACKAGES_DIR", DIR, CREATE);
+const BUILDSYS_ROOT_DIR: PathVar = PathVar::new("BUILDSYS_ROOT_DIR", DIR, NO_CREATE);
+const BUILDSYS_SOURCES_DIR: PathVar = PathVar::new("BUILDSYS_SOURCES_DIR", DIR, NO_CREATE);
+const BUILDSYS_STATE_DIR: PathVar = PathVar::new("BUILDSYS_STATE_DIR", DIR, CREATE);
+const BUILDSYS_TOOLS_DIR: PathVar = PathVar::new("BUILDSYS_TOOLS_DIR", DIR, NO_CREATE);
+const BUILDSYS_VARIANT_DIR: PathVar = PathVar::new("BUILDSYS_VARIANT_DIR", DIR, CREATE);
+const CARGO_HOME: PathVar = PathVar::new("CARGO_HOME", DIR, CREATE);
+const CARGO_TARGET_DIR: PathVar = PathVar::new("CARGO_TARGET_DIR", DIR, CREATE);
+const GO_MOD_CACHE: PathVar = PathVar::new("GO_MOD_CACHE", DIR, CREATE);
+const PUBLISH_REPO_BASE_DIR: PathVar = PathVar::new("PUBLISH_REPO_BASE_DIR", DIR, CREATE);
+const TESTSYS_KUBECONFIG: PathVar = PathVar::new("TESTSYS_KUBECONFIG", FILE, CREATE);
+const TESTSYS_MGMT_CLUSTER_KUBECONFIG: PathVar =
+    PathVar::new("TESTSYS_MGMT_CLUSTER_KUBECONFIG", FILE, CREATE);
+const TESTSYS_TEST_CONFIG_PATH: PathVar = PathVar::new("TESTSYS_TEST_CONFIG_PATH", FILE, NO_CREATE);
+const TESTSYS_TESTS_DIR: PathVar = PathVar::new("TESTSYS_TESTS_DIR", DIR, CREATE);
+const TESTSYS_USERDATA: PathVar = PathVar::new("TESTSYS_USERDATA", FILE, CREATE);
+const VMWARE_IMPORT_SPEC_PATH: PathVar = PathVar::new("VMWARE_IMPORT_SPEC_PATH", FILE, NO_CREATE);
+
+const PATH_VARS: [(PathVar, &[Target]); 1] =
+    [(BOOT_CONFIG_INPUT, &[Target::Build, Target::BuildVariant])];
