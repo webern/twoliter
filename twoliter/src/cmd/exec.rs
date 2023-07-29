@@ -81,6 +81,9 @@ pub(crate) struct Exec {
     #[clap(long = "mount")]
     mounts: Vec<PathBuf>,
 
+    /// Cargo make target. E.g. the word "build" if we want to execute `cargo make build`.
+    cargo_make_target: String,
+
     /// Arguments to be passed to cargo make
     cargo_make_args: Vec<String>,
 }
