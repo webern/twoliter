@@ -82,10 +82,10 @@ pub(crate) struct Exec {
     mounts: Vec<PathBuf>,
 
     /// Cargo make target. E.g. the word "build" if we want to execute `cargo make build`.
-    cargo_make_target: String,
+    makefile_target: String,
 
     /// Arguments to be passed to cargo make
-    cargo_make_args: Vec<String>,
+    additional_args: Vec<String>,
 }
 
 impl Exec {
@@ -156,7 +156,7 @@ impl Exec {
             .command_arg(format!("BUILDSYS_ROOT_DIR={}", project_dir.display()));
 
         // These have to go last because the last of these might be the Makefile.toml target.
-        for cargo_make_arg in &self.cargo_make_args {
+        for cargo_make_arg in &self.additional_args {
             docker_command = docker_command.command_arg(cargo_make_arg);
         }
         docker_command.execute().await?;
