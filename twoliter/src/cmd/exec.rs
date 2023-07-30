@@ -120,7 +120,7 @@ impl Exec {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 enum PathType {
     File,
     Dir,
@@ -418,6 +418,7 @@ enum Target {
     FetchSdk,
     FetchToolchain,
     FetchSources,
+    FetchVendored,
     UnitTests,
     Check,
     CheckFmt,
@@ -506,27 +507,209 @@ const BUILDSYS_IMAGES_DIR: PathVar = PathVar::new("BUILDSYS_IMAGES_DIR", DIR, CR
 const BUILDSYS_KMOD_KIT_PATH: PathVar = PathVar::new("BUILDSYS_KMOD_KIT_PATH", DIR, CREATE);
 const BUILDSYS_LICENSES_CONFIG_PATH: PathVar =
     PathVar::new("BUILDSYS_LICENSES_CONFIG_PATH", FILE, NO_CREATE);
-const BUILDSYS_METADATA_DIR: PathVar = PathVar::new("BUILDSYS_METADATA_DIR", DIR, CREATE);
 const BUILDSYS_OUTPUT_DIR: PathVar = PathVar::new("BUILDSYS_OUTPUT_DIR", DIR, CREATE);
 const BUILDSYS_OVA_PATH: PathVar = PathVar::new("BUILDSYS_OVA_PATH", FILE, CREATE);
 const BUILDSYS_OVF_TEMPLATE: PathVar = PathVar::new("BUILDSYS_OVF_TEMPLATE", FILE, NO_CREATE);
 const BUILDSYS_PACKAGES_DIR: PathVar = PathVar::new("BUILDSYS_PACKAGES_DIR", DIR, CREATE);
 const BUILDSYS_ROOT_DIR: PathVar = PathVar::new("BUILDSYS_ROOT_DIR", DIR, NO_CREATE);
+const BUILDSYS_SBKEYS_PROFILE_DIR: PathVar =
+    PathVar::new("BUILDSYS_SBKEYS_PROFILE_DIR", DIR, CREATE);
 const BUILDSYS_SOURCES_DIR: PathVar = PathVar::new("BUILDSYS_SOURCES_DIR", DIR, NO_CREATE);
 const BUILDSYS_STATE_DIR: PathVar = PathVar::new("BUILDSYS_STATE_DIR", DIR, CREATE);
 const BUILDSYS_TOOLS_DIR: PathVar = PathVar::new("BUILDSYS_TOOLS_DIR", DIR, NO_CREATE);
 const BUILDSYS_VARIANT_DIR: PathVar = PathVar::new("BUILDSYS_VARIANT_DIR", DIR, CREATE);
 const CARGO_HOME: PathVar = PathVar::new("CARGO_HOME", DIR, CREATE);
-const CARGO_TARGET_DIR: PathVar = PathVar::new("CARGO_TARGET_DIR", DIR, CREATE);
+const GO_MODULES: PathVar = PathVar::new("GO_MODULES", DIR, NO_CREATE);
 const GO_MOD_CACHE: PathVar = PathVar::new("GO_MOD_CACHE", DIR, CREATE);
+const PUBLISH_EXPIRATION_POLICY_PATH: PathVar =
+    PathVar::new("PUBLISH_EXPIRATION_POLICY_PATH", FILE, NO_CREATE);
+const PUBLISH_INFRA_CONFIG_PATH: PathVar = PathVar::new("PUBLISH_INFRA_CONFIG_PATH", FILE, CREATE);
 const PUBLISH_REPO_BASE_DIR: PathVar = PathVar::new("PUBLISH_REPO_BASE_DIR", DIR, CREATE);
+const PUBLISH_REPO_KEY: PathVar = PathVar::new("PUBLISH_REPO_KEY", FILE, CREATE);
+const PUBLISH_REPO_OUTPUT_DIR: PathVar = PathVar::new("PUBLISH_REPO_OUTPUT_DIR", FILE, CREATE);
+const PUBLISH_REPO_ROOT_JSON: PathVar = PathVar::new("PUBLISH_REPO_ROOT_JSON", FILE, CREATE);
+const PUBLISH_SSM_TEMPLATES_PATH: PathVar =
+    PathVar::new("PUBLISH_SSM_TEMPLATES_PATH", FILE, CREATE);
 const TESTSYS_KUBECONFIG: PathVar = PathVar::new("TESTSYS_KUBECONFIG", FILE, CREATE);
 const TESTSYS_MGMT_CLUSTER_KUBECONFIG: PathVar =
     PathVar::new("TESTSYS_MGMT_CLUSTER_KUBECONFIG", FILE, CREATE);
-const TESTSYS_TEST_CONFIG_PATH: PathVar = PathVar::new("TESTSYS_TEST_CONFIG_PATH", FILE, NO_CREATE);
 const TESTSYS_TESTS_DIR: PathVar = PathVar::new("TESTSYS_TESTS_DIR", DIR, CREATE);
+const TESTSYS_TEST_CONFIG_PATH: PathVar = PathVar::new("TESTSYS_TEST_CONFIG_PATH", FILE, NO_CREATE);
 const TESTSYS_USERDATA: PathVar = PathVar::new("TESTSYS_USERDATA", FILE, CREATE);
 const VMWARE_IMPORT_SPEC_PATH: PathVar = PathVar::new("VMWARE_IMPORT_SPEC_PATH", FILE, NO_CREATE);
 
-const PATH_VARS: [(PathVar, &[Target]); 1] =
-    [(BOOT_CONFIG_INPUT, &[Target::Build, Target::BuildVariant])];
+const BUILDSYS_PATHS: &[PathVar] = &[
+    BOOT_CONFIG,
+    BOOT_CONFIG_INPUT,
+    BUILDSYS_SBKEYS_PROFILE_DIR,
+    BUILDSYS_BUILD_DIR,
+    BUILDSYS_IMAGES_DIR,
+    BUILDSYS_KMOD_KIT_PATH,
+    BUILDSYS_LICENSES_CONFIG_PATH,
+    BUILDSYS_OUTPUT_DIR,
+    BUILDSYS_STATE_DIR,
+    BUILDSYS_TOOLS_DIR,
+    BUILDSYS_VARIANT_DIR,
+    BUILDSYS_VARIANT_DIR,
+    CARGO_HOME,
+    GO_MOD_CACHE,
+    GO_MODULES,
+    BUILDSYS_SBKEYS_PROFILE_DIR,
+];
+
+const DOCKER_RUN_PATHS: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_ROOT_DIR,
+    BUILDSYS_SOURCES_DIR,
+    BUILDSYS_TOOLS_DIR,
+    BUILDSYS_SOURCES_DIR,
+    GO_MOD_CACHE,
+    GO_MODULES,
+];
+
+const RUST_TOOLS_PATHS: &[PathVar] = &[CARGO_HOME, BUILDSYS_TOOLS_DIR];
+
+const PUBLISH_PATHS: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_TOOLS_DIR,
+    PUBLISH_INFRA_CONFIG_PATH,
+    PUBLISH_REPO_ROOT_JSON,
+    PUBLISH_REPO_KEY,
+    PUBLISH_REPO_BASE_DIR,
+    PUBLISH_REPO_OUTPUT_DIR,
+];
+
+const PUBLISH_REFRESH_REPO_PATHS: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_TOOLS_DIR,
+    PUBLISH_INFRA_CONFIG_PATH,
+    PUBLISH_REPO_ROOT_JSON,
+    PUBLISH_REPO_KEY,
+    PUBLISH_REPO_BASE_DIR,
+    PUBLISH_REPO_OUTPUT_DIR,
+    PUBLISH_EXPIRATION_POLICY_PATH,
+];
+
+const PUBLISH_AMI_PATHS: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_ROOT_DIR,
+    BUILDSYS_TOOLS_DIR,
+    BUILDSYS_VARIANT_DIR,
+    PUBLISH_INFRA_CONFIG_PATH,
+];
+
+const PUBLISH_SSM_PATH: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_ROOT_DIR,
+    BUILDSYS_TOOLS_DIR,
+    BUILDSYS_VARIANT_DIR,
+    PUBLISH_INFRA_CONFIG_PATH,
+    PUBLISH_SSM_TEMPLATES_PATH,
+];
+
+const VMWARE_PATHS: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_VARIANT_DIR,
+    PUBLISH_INFRA_CONFIG_PATH,
+    VMWARE_IMPORT_SPEC_PATH,
+];
+
+const TESTSYS_PATHS: &[PathVar] = &[
+    CARGO_HOME,
+    BUILDSYS_ROOT_DIR,
+    BUILDSYS_TOOLS_DIR,
+    TESTSYS_KUBECONFIG,
+    TESTSYS_MGMT_CLUSTER_KUBECONFIG,
+    TESTSYS_TESTS_DIR,
+    TESTSYS_TEST_CONFIG_PATH,
+    TESTSYS_USERDATA,
+    VMWARE_IMPORT_SPEC_PATH,
+];
+
+impl Target {
+    fn paths(&self) -> &'static [PathVar] {
+        match self {
+            Target::Setup => &[
+                BUILDSYS_BUILD_DIR,
+                BUILDSYS_OUTPUT_DIR,
+                BUILDSYS_PACKAGES_DIR,
+                BUILDSYS_STATE_DIR,
+                GO_MOD_CACHE,
+            ],
+            Target::SetupBuild => &[],
+            Target::Fetch => &[],
+            Target::FetchSdk => &[],
+            Target::FetchToolchain => &[],
+            Target::FetchSources => &[],
+            Target::FetchVendored => DOCKER_RUN_PATHS,
+            Target::UnitTests => DOCKER_RUN_PATHS,
+            Target::Check => &[],
+            Target::CheckFmt => DOCKER_RUN_PATHS,
+            Target::CheckLints => &[],
+            Target::CheckClippy => DOCKER_RUN_PATHS,
+            Target::CheckShell => &[BUILDSYS_TOOLS_DIR],
+            Target::CheckGolangciLint => &[GO_MOD_CACHE, GO_MODULES],
+            Target::CheckMigrations => &[BUILDSYS_ROOT_DIR, BUILDSYS_SOURCES_DIR],
+            Target::BuildTools => RUST_TOOLS_PATHS,
+            Target::PublishSetupTools => RUST_TOOLS_PATHS,
+            Target::InfraTools => RUST_TOOLS_PATHS,
+            Target::PublishTools => RUST_TOOLS_PATHS,
+            Target::BuildSbkeys => RUST_TOOLS_PATHS,
+            Target::CheckCargoVersion => &[CARGO_HOME],
+            Target::BootConfig => &[BOOT_CONFIG_INPUT, BOOT_CONFIG, GO_MOD_CACHE],
+            Target::ValidateBootConfig => &[BOOT_CONFIG_INPUT, BOOT_CONFIG, GO_MOD_CACHE],
+            Target::BuildPackage => BUILDSYS_PATHS,
+            Target::BuildVariant => BUILDSYS_PATHS,
+            Target::CheckLicenses => DOCKER_RUN_PATHS,
+            Target::FetchLicenses => DOCKER_RUN_PATHS,
+            Target::Build => &[],
+            Target::Tuftool => RUST_TOOLS_PATHS,
+            Target::CreateInfra => RUST_TOOLS_PATHS,
+            Target::PublishSetup => PUBLISH_PATHS,
+            Target::PublishSetupWithoutKey => PUBLISH_PATHS,
+            Target::ValidateRepo => PUBLISH_PATHS,
+            Target::CheckRepoExpirations => PUBLISH_PATHS,
+            // TODO - this needs the expirations path
+            Target::RefreshRepo => PUBLISH_PATHS,
+            Target::Ami => &[
+                CARGO_HOME,
+                BUILDSYS_ROOT_DIR,
+                BUILDSYS_TOOLS_DIR,
+                BUILDSYS_VARIANT_DIR,
+                PUBLISH_INFRA_CONFIG_PATH,
+            ],
+            Target::AmiPublic => PUBLISH_AMI_PATHS,
+            Target::AmiPrivate => PUBLISH_AMI_PATHS,
+            Target::GrantAmi => PUBLISH_AMI_PATHS,
+            Target::RevokeAmi => PUBLISH_AMI_PATHS,
+            Target::ValidateAmi => PUBLISH_AMI_PATHS,
+            Target::Ssm => PUBLISH_SSM_PATH,
+            Target::PromoteSsm => PUBLISH_SSM_PATH,
+            Target::ValidateSsm => PUBLISH_SSM_PATH,
+            Target::UploadOvaBase => PUBLISH_SSM_PATH,
+            Target::UploadOva => PUBLISH_SSM_PATH,
+            Target::VmwareTemplate => PUBLISH_SSM_PATH,
+            Target::Clean => &[],
+            Target::CleanSources => &[BUILDSYS_TOOLS_DIR],
+            Target::CleanPackages => &[BUILDSYS_PACKAGES_DIR],
+            Target::CleanImages => &[BUILDSYS_IMAGES_DIR],
+            Target::CleanRepos => &[PUBLISH_REPO_BASE_DIR],
+            Target::CleanState => &[BUILDSYS_STATE_DIR],
+            Target::PurgeCache => &[],
+            Target::PurgeGoVendor => &[GO_MOD_CACHE],
+            Target::PurgeCargo => &[CARGO_HOME],
+            Target::TestTools => TESTSYS_PATHS,
+            Target::SetupTest => TESTSYS_PATHS,
+            Target::Test => TESTSYS_PATHS,
+            Target::CleanTest => TESTSYS_PATHS,
+            Target::ResetTest => TESTSYS_PATHS,
+            Target::UninstallTest => TESTSYS_PATHS,
+            Target::PurgeTest => TESTSYS_PATHS,
+            Target::WatchTest => TESTSYS_PATHS,
+            Target::WatchTestAll => TESTSYS_PATHS,
+            Target::LogTest => TESTSYS_PATHS,
+            Target::Testsys => TESTSYS_PATHS,
+            Target::Default => &[],
+        }
+    }
+}
