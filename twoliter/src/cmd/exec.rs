@@ -4,6 +4,7 @@ use crate::{docker, project};
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, trace, warn};
+use nix::libc::mount;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use std::env;
@@ -206,6 +207,7 @@ async fn add(
     };
 
     let mount_path = canonicalize(uncanonicalized_mount_path)?;
+    trace!("Adding mount for '{}'", mount_path.display());
     mounts.push(Mount::new(mount_path));
     Ok(())
 }
