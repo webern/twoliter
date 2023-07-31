@@ -3,8 +3,9 @@ use crate::docker::{DockerRun, Mount};
 use crate::{docker, project};
 use anyhow::{Context, Result};
 use clap::Parser;
-use log::{debug, trace};
+use log::{debug, trace, warn};
 use serde::{Deserialize, Serialize};
+use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -22,7 +23,7 @@ pub(crate) struct Exec {
     docker_socket: String,
 
     /// Cargo make target. E.g. the word "build" if we want to execute `cargo make build`.
-    makefile_target: String,
+    makefile_target: Target,
 
     /// Arguments to be passed to cargo make
     additional_args: Vec<String>,
@@ -109,6 +110,29 @@ impl Exec {
         let project_dir = project_dir.as_ref();
         let mut mounts = vec![Mount::new(project_dir)];
 
+        // Get paths from env args and prepare add them to our mounts.
+        // TODO - we actually need to consider the dependency graph between tasks.
+        for path_var in self.makefile_target.paths() {
+            let path = match env::var(path_var.name) {
+                Ok(value) => value,
+                Err(e) => {
+                    warn!(
+                        "Unable to read environment variable '{}': {}",
+                        path_var.name, e
+                    );
+                    continue;
+                }
+            };
+
+            add(
+                &mut mounts,
+                project_dir,
+                &PathBuf::from(path),
+                path_var.r#type,
+                path_var.create,
+            )
+            .await?;
+        }
         // TODO: mount paths if we find any in the args and we need them.
 
         if let Some(testsys_test_path) = find_testsys_test_path(env::args()) {
@@ -142,15 +166,10 @@ const NO_CREATE: bool = false;
 async fn add(
     mounts: &mut Vec<Mount>,
     project_dir: &Path,
-    path: &Option<PathBuf>,
+    path: &Path,
     path_type: PathType,
     create: bool,
 ) -> Result<()> {
-    // Nothing to do if we weren't asked to mount anything.
-    let path = match path {
-        Some(p) => p,
-        None => return Ok(()),
-    };
     let exists = path.exists();
     let in_project = path.starts_with(project_dir);
     let uncanonicalized_mount_path = if create && !exists && !in_project {
@@ -482,6 +501,9 @@ enum Target {
     Default,
 }
 
+derive_display_from_serialize!(Target);
+derive_fromstr_from_deserialize!(Target);
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 struct PathVar {
     name: &'static str,
@@ -572,6 +594,7 @@ const RUST_TOOLS_PATHS: &[PathVar] = &[CARGO_HOME, BUILDSYS_TOOLS_DIR];
 const PUBLISH_PATHS: &[PathVar] = &[
     CARGO_HOME,
     BUILDSYS_TOOLS_DIR,
+    PUBLISH_EXPIRATION_POLICY_PATH,
     PUBLISH_INFRA_CONFIG_PATH,
     PUBLISH_REPO_ROOT_JSON,
     PUBLISH_REPO_KEY,
@@ -582,6 +605,7 @@ const PUBLISH_PATHS: &[PathVar] = &[
 const PUBLISH_REFRESH_REPO_PATHS: &[PathVar] = &[
     CARGO_HOME,
     BUILDSYS_TOOLS_DIR,
+    PUBLISH_EXPIRATION_POLICY_PATH,
     PUBLISH_INFRA_CONFIG_PATH,
     PUBLISH_REPO_ROOT_JSON,
     PUBLISH_REPO_KEY,
@@ -610,6 +634,8 @@ const PUBLISH_SSM_PATH: &[PathVar] = &[
 const VMWARE_PATHS: &[PathVar] = &[
     CARGO_HOME,
     BUILDSYS_VARIANT_DIR,
+    BUILDSYS_OVA_PATH,
+    BUILDSYS_OVF_TEMPLATE,
     PUBLISH_INFRA_CONFIG_PATH,
     VMWARE_IMPORT_SPEC_PATH,
 ];
@@ -669,15 +695,8 @@ impl Target {
             Target::PublishSetupWithoutKey => PUBLISH_PATHS,
             Target::ValidateRepo => PUBLISH_PATHS,
             Target::CheckRepoExpirations => PUBLISH_PATHS,
-            // TODO - this needs the expirations path
-            Target::RefreshRepo => PUBLISH_PATHS,
-            Target::Ami => &[
-                CARGO_HOME,
-                BUILDSYS_ROOT_DIR,
-                BUILDSYS_TOOLS_DIR,
-                BUILDSYS_VARIANT_DIR,
-                PUBLISH_INFRA_CONFIG_PATH,
-            ],
+            Target::RefreshRepo => PUBLISH_REFRESH_REPO_PATHS,
+            Target::Ami => PUBLISH_AMI_PATHS,
             Target::AmiPublic => PUBLISH_AMI_PATHS,
             Target::AmiPrivate => PUBLISH_AMI_PATHS,
             Target::GrantAmi => PUBLISH_AMI_PATHS,
@@ -686,9 +705,9 @@ impl Target {
             Target::Ssm => PUBLISH_SSM_PATH,
             Target::PromoteSsm => PUBLISH_SSM_PATH,
             Target::ValidateSsm => PUBLISH_SSM_PATH,
-            Target::UploadOvaBase => PUBLISH_SSM_PATH,
-            Target::UploadOva => PUBLISH_SSM_PATH,
-            Target::VmwareTemplate => PUBLISH_SSM_PATH,
+            Target::UploadOvaBase => VMWARE_PATHS,
+            Target::UploadOva => VMWARE_PATHS,
+            Target::VmwareTemplate => VMWARE_PATHS,
             Target::Clean => &[],
             Target::CleanSources => &[BUILDSYS_TOOLS_DIR],
             Target::CleanPackages => &[BUILDSYS_PACKAGES_DIR],
