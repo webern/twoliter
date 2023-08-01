@@ -221,11 +221,12 @@ async fn add(
 
 /// A list of environment variables that don't conform to naming convensions, but we need to pass
 /// through to the `cargo make` invocation.
-const ENV_VARS: [&str; 13] = [
+const ENV_VARS: [&str; 14] = [
     "ALLOW_MISSING_KEY",
     "AMI_DATA_FILE_SUFFIX",
     "BOOT_CONFIG",
     "BOOT_CONFIG_INPUT",
+    "CARGO_HOME",
     "CARGO_MAKE_CARGO_ARGS",
     "CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH",
     "CARGO_MAKE_TESTSYS_ARGS",
