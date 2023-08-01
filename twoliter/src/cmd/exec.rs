@@ -4,7 +4,6 @@ use crate::{docker, project};
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, trace, warn};
-use nix::libc::mount;
 use serde::{Deserialize, Serialize};
 use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use std::env;
@@ -134,7 +133,6 @@ impl Exec {
             )
             .await?;
         }
-        // TODO: mount paths if we find any in the args and we need them.
 
         if let Some(testsys_test_path) = find_testsys_test_path(env::args()) {
             let testsys_test_path = canonicalize(testsys_test_path)?;
@@ -182,6 +180,14 @@ async fn add(
                     path.display()
                 ))?;
                 if !parent.exists() {
+                    trace!(
+                        "Creating directory '{}' for file '{}'",
+                        parent.display(),
+                        path.file_name()
+                            .unwrap_or_default()
+                            .to_str()
+                            .unwrap_or_default()
+                    );
                     fs::create_dir_all(&parent).await.context(format!(
                         "Unable to create a directory for '{}'",
                         path.display()
@@ -190,6 +196,7 @@ async fn add(
                 parent
             }
             PathType::Dir => {
+                trace!("Creating directory '{}'", path.display());
                 fs::create_dir_all(&path)
                     .await
                     .context(format!("Unable to create directory '{}'", path.display()))?;
@@ -432,6 +439,7 @@ fn test_find_testsys_test_path_not_found_4() {
 }
 
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
 enum Target {
     Setup,
     SetupBuild,
