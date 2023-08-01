@@ -32,6 +32,7 @@ fn main() {
     // TODO - name this Makefile.toml when we have ported the Bottlerocket monorepo git history.
     let makefile_source = data_input_dir.join("Makefile.temp.toml");
     copy_file(makefile_source, tools_dir.join("Makefile.toml"));
+    // Extract Makefile task dependency graph.
 
     // Create tarball
     let tar_gz =
