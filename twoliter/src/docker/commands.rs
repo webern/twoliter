@@ -95,7 +95,7 @@ impl DockerBuild {
     }
 }
 
-#[derive(Debug, Copy, Clone, Serialize)]
+#[derive(Debug, Copy, Clone, Ord, PartialOrd, PartialEq, Hash, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub(crate) enum MountType {
     Bind,
@@ -112,36 +112,36 @@ impl Default for MountType {
 }
 
 /// The value of a `--mount` argument.
-#[derive(Debug, Default, Clone)]
-pub(crate) struct Mount {
-    pub(crate) type_: MountType,
-    pub(crate) source: PathBuf,
-    pub(crate) destination: PathBuf,
-    pub(crate) read_only: bool,
+#[derive(Debug, Default, Clone, Ord, PartialOrd, PartialEq, Hash, Eq)]
+pub(crate) struct _Mount {
+    pub(crate) _type: MountType,
+    pub(crate) _source: PathBuf,
+    pub(crate) _destination: PathBuf,
+    pub(crate) _read_only: bool,
 }
 
-impl Mount {
+impl _Mount {
     /// Create a new `Mount` object, of type `Bind`, with the same external and internal path.
     /// For example, `Mount::new('/foo')` will create `type=bind,source=/foo,target=foo`.
-    pub(crate) fn new(path: impl AsRef<Path>) -> Self {
+    pub(crate) fn _new(path: impl AsRef<Path>) -> Self {
         Self {
-            type_: MountType::Bind,
-            source: path.as_ref().into(),
-            destination: path.as_ref().into(),
-            read_only: false,
+            _type: MountType::Bind,
+            _source: path.as_ref().into(),
+            _destination: path.as_ref().into(),
+            _read_only: false,
         }
     }
 
     /// Express the mount as the value of `docker run` argument, e.g.
     /// `type=bind,source=/foo,target=foo`.
-    fn as_arg(&self) -> String {
+    fn _as_arg(&self) -> String {
         let mut s = format!(
             "type={},source={},target={}",
-            self.type_,
-            self.source.display(),
-            self.destination.display()
+            self._type,
+            self._source.display(),
+            self._destination.display()
         );
-        if self.read_only {
+        if self._read_only {
             s.push_str(",readonly");
         }
         s
@@ -155,28 +155,28 @@ impl Mount {
 /// let build = DockerRun::new(image).name("container-instance").command_arg("bash").execute().await?;
 /// ```
 #[derive(Debug, Clone)]
-pub(crate) struct DockerRun {
+pub(crate) struct _DockerRun {
     _env: HashMap<String, String>,
-    mounts: Vec<Mount>,
-    name: Option<String>,
-    remove: bool,
-    user: Option<String>,
-    workdir: Option<PathBuf>,
-    image: ImageUri,
-    command_args: Vec<String>,
+    _mounts: Vec<_Mount>,
+    _name: Option<String>,
+    _remove: bool,
+    _user: Option<String>,
+    _workdir: Option<PathBuf>,
+    _image: ImageUri,
+    _command_args: Vec<String>,
 }
 
-impl DockerRun {
-    pub(crate) fn new(image: ImageUri) -> Self {
+impl _DockerRun {
+    pub(crate) fn _new(image: ImageUri) -> Self {
         Self {
             _env: HashMap::new(),
-            mounts: Vec::new(),
-            name: None,
-            remove: false,
-            user: None,
-            workdir: None,
-            image,
-            command_args: Vec::new(),
+            _mounts: Vec::new(),
+            _name: None,
+            _remove: false,
+            _user: None,
+            _workdir: None,
+            _image: image,
+            _command_args: Vec::new(),
         }
     }
 
@@ -191,75 +191,75 @@ impl DockerRun {
     }
 
     /// Add a mount with the `--mount` command.
-    pub(crate) fn mount(mut self, mount: Mount) -> Self {
-        self.mounts.push(mount);
+    pub(crate) fn _mount(mut self, mount: _Mount) -> Self {
+        self._mounts.push(mount);
         self
     }
 
     /// Give the container a name, for example `--name my-container`.
-    pub(crate) fn name<S>(mut self, name: S) -> Self
+    pub(crate) fn _name<S>(mut self, name: S) -> Self
     where
         S: Into<String>,
     {
-        self.name = Some(name.into());
+        self._name = Some(name.into());
         self
     }
 
     /// Enable the `--rm` command to remove the container when it exits.
-    pub(crate) fn remove(mut self) -> Self {
-        self.remove = true;
+    pub(crate) fn _remove(mut self) -> Self {
+        self._remove = true;
         self
     }
 
     /// Set `--user`.
-    pub(crate) fn user<S>(mut self, user: S) -> Self
+    pub(crate) fn _user<S>(mut self, user: S) -> Self
     where
         S: Into<String>,
     {
-        self.user = Some(user.into());
+        self._user = Some(user.into());
         self
     }
 
     /// Set `--workdir`.
-    pub(crate) fn workdir<P>(mut self, workdir: P) -> Self
+    pub(crate) fn _workdir<P>(mut self, workdir: P) -> Self
     where
         P: Into<PathBuf>,
     {
-        self.workdir = Some(workdir.into());
+        self._workdir = Some(workdir.into());
         self
     }
 
     /// Add an argument to the end of the `docker run` command to be executed in the container.
     /// For example in `docker run hello-world bash`, bash is the first `command_arg`.
-    pub(crate) fn command_arg<S>(mut self, arg: S) -> Self
+    pub(crate) fn _command_arg<S>(mut self, arg: S) -> Self
     where
         S: Into<String>,
     {
-        self.command_args.push(arg.into());
+        self._command_args.push(arg.into());
         self
     }
 
     /// Add multiple build args, where `("KEY", value)` becomes `--build-arg=KEY=value`.
     pub(crate) fn _command_args<I: IntoIterator<Item = String>>(mut self, command_args: I) -> Self {
-        self.command_args.extend(command_args.into_iter());
+        self._command_args.extend(command_args.into_iter());
         self
     }
 
     /// Run the `docker run` command.
-    pub(crate) async fn execute(self) -> Result<()> {
+    pub(crate) async fn _execute(self) -> Result<()> {
         let mut args = vec!["run".to_string()];
-        for mount in &self.mounts {
+        for mount in &self._mounts {
             args.push("--mount".to_string());
-            args.push(mount.as_arg())
+            args.push(mount._as_arg())
         }
-        if let Some(name) = self.name.as_ref() {
+        if let Some(name) = self._name.as_ref() {
             args.push("--name".to_string());
             args.push(name.to_string());
         }
-        if self.remove {
+        if self._remove {
             args.push("--rm".to_string());
         }
-        if let Some(user) = &self.user {
+        if let Some(user) = &self._user {
             args.push("--user".to_string());
             args.push(user.clone());
         }
@@ -279,8 +279,8 @@ impl DockerRun {
         // TODO - this crap again
         args.push("--env=GOPROXY=direct".to_string());
 
-        args.push(self.image.uri());
-        args.extend(self.command_args.iter().map(|s| s.to_string()));
+        args.push(self._image.uri());
+        args.extend(self._command_args.iter().map(|s| s.to_string()));
         exec(Command::new("docker").args(args.into_iter())).await
     }
 }
