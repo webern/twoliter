@@ -480,7 +480,7 @@ const BUILDSYS_STATE_DIR: PathVar = PathVar::new("BUILDSYS_STATE_DIR", DIR, CREA
 const BUILDSYS_TOOLS_DIR: PathVar = PathVar::new("BUILDSYS_TOOLS_DIR", DIR, NO_CREATE);
 const BUILDSYS_VARIANT_DIR: PathVar = PathVar::new("BUILDSYS_VARIANT_DIR", DIR, CREATE);
 const CARGO_HOME: PathVar = PathVar::new("CARGO_HOME", DIR, CREATE);
-const GO_MODULES: PathVar = PathVar::new("GO_MODULES", DIR, NO_CREATE);
+// const GO_MODULES: PathVar = PathVar::new("GO_MODULES", DIR, NO_CREATE);
 const GO_MOD_CACHE: PathVar = PathVar::new("GO_MOD_CACHE", DIR, CREATE);
 const PUBLISH_EXPIRATION_POLICY_PATH: PathVar =
     PathVar::new("PUBLISH_EXPIRATION_POLICY_PATH", FILE, NO_CREATE);
@@ -514,7 +514,7 @@ const BUILDSYS_PATHS: &[PathVar] = &[
     BUILDSYS_VARIANT_DIR,
     CARGO_HOME,
     GO_MOD_CACHE,
-    GO_MODULES,
+    // GO_MODULES,
     BUILDSYS_SBKEYS_PROFILE_DIR,
 ];
 
@@ -525,7 +525,7 @@ const DOCKER_RUN_PATHS: &[PathVar] = &[
     BUILDSYS_TOOLS_DIR,
     BUILDSYS_SOURCES_DIR,
     GO_MOD_CACHE,
-    GO_MODULES,
+    // GO_MODULES,
 ];
 
 const RUST_TOOLS_PATHS: &[PathVar] = &[CARGO_HOME, BUILDSYS_TOOLS_DIR];
@@ -613,7 +613,7 @@ impl MakefileTarget {
             MakefileTarget::CheckLints => &[],
             MakefileTarget::CheckClippy => DOCKER_RUN_PATHS,
             MakefileTarget::CheckShell => &[BUILDSYS_TOOLS_DIR],
-            MakefileTarget::CheckGolangciLint => &[GO_MOD_CACHE, GO_MODULES],
+            MakefileTarget::CheckGolangciLint => &[BUILDSYS_SOURCES_DIR, GO_MOD_CACHE],
             MakefileTarget::CheckMigrations => &[BUILDSYS_ROOT_DIR, BUILDSYS_SOURCES_DIR],
             MakefileTarget::BuildTools => RUST_TOOLS_PATHS,
             MakefileTarget::PublishSetupTools => RUST_TOOLS_PATHS,
