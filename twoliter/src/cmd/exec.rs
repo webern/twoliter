@@ -1,11 +1,11 @@
-use crate::common::fs;
+use crate::common::{fs, MakefileTarget};
 use crate::docker::{DockerRun, Mount};
+use crate::makefile::TASK_DEPENDENCIES;
 use crate::{docker, project};
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, trace, warn};
-use serde::{Deserialize, Serialize};
-use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
+use std::collections::{HashMap, HashSet};
 use std::env;
 use std::path::{Path, PathBuf};
 
@@ -23,7 +23,7 @@ pub(crate) struct Exec {
     docker_socket: String,
 
     /// Cargo make target. E.g. the word "build" if we want to execute `cargo make build`.
-    makefile_target: Target,
+    makefile_target: MakefileTarget,
 
     /// Arguments to be passed to cargo make
     additional_args: Vec<String>,
@@ -111,8 +111,11 @@ impl Exec {
         let mut mounts = vec![Mount::new(project_dir)];
 
         // Get paths from env args and prepare add them to our mounts.
-        // TODO - we actually need to consider the dependency graph between tasks.
-        for path_var in self.makefile_target.paths() {
+        let path_vars = all_necessary_path_vars(self.makefile_target).context(format!(
+            "Unable to find all dependency paths to mount for '{}'",
+            self.makefile_target,
+        ))?;
+        for path_var in path_vars {
             let path = match env::var(path_var.name) {
                 Ok(value) => value,
                 Err(e) => {
@@ -124,6 +127,7 @@ impl Exec {
                 }
             };
 
+            // Add the path to our list of paths if it is appropriate to do so.
             add(
                 &mut mounts,
                 project_dir,
@@ -439,82 +443,6 @@ fn test_find_testsys_test_path_not_found_4() {
     assert!(find_testsys_test_path(args).is_none())
 }
 
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "kebab-case")]
-enum Target {
-    Setup,
-    SetupBuild,
-    Fetch,
-    FetchSdk,
-    FetchToolchain,
-    FetchSources,
-    FetchVendored,
-    UnitTests,
-    Check,
-    CheckFmt,
-    CheckLints,
-    CheckClippy,
-    CheckShell,
-    CheckGolangciLint,
-    CheckMigrations,
-    BuildTools,
-    PublishSetupTools,
-    InfraTools,
-    PublishTools,
-    BuildSbkeys,
-    CheckCargoVersion,
-    BootConfig,
-    ValidateBootConfig,
-    BuildPackage,
-    BuildVariant,
-    CheckLicenses,
-    FetchLicenses,
-    Build,
-    Tuftool,
-    CreateInfra,
-    PublishSetup,
-    PublishSetupWithoutKey,
-    ValidateRepo,
-    CheckRepoExpirations,
-    RefreshRepo,
-    Ami,
-    AmiPublic,
-    AmiPrivate,
-    GrantAmi,
-    RevokeAmi,
-    ValidateAmi,
-    Ssm,
-    PromoteSsm,
-    ValidateSsm,
-    UploadOvaBase,
-    UploadOva,
-    VmwareTemplate,
-    Clean,
-    CleanSources,
-    CleanPackages,
-    CleanImages,
-    CleanRepos,
-    CleanState,
-    PurgeCache,
-    PurgeGoVendor,
-    PurgeCargo,
-    TestTools,
-    SetupTest,
-    Test,
-    CleanTest,
-    ResetTest,
-    UninstallTest,
-    PurgeTest,
-    WatchTest,
-    WatchTestAll,
-    LogTest,
-    Testsys,
-    Default,
-}
-
-derive_display_from_serialize!(Target);
-derive_fromstr_from_deserialize!(Target);
-
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
 struct PathVar {
     name: &'static str,
@@ -663,83 +591,120 @@ const TESTSYS_PATHS: &[PathVar] = &[
     VMWARE_IMPORT_SPEC_PATH,
 ];
 
-impl Target {
+impl MakefileTarget {
     fn paths(&self) -> &'static [PathVar] {
         match self {
-            Target::Setup => &[
+            MakefileTarget::Setup => &[
                 BUILDSYS_BUILD_DIR,
                 BUILDSYS_OUTPUT_DIR,
                 BUILDSYS_PACKAGES_DIR,
                 BUILDSYS_STATE_DIR,
                 GO_MOD_CACHE,
             ],
-            Target::SetupBuild => &[],
-            Target::Fetch => &[],
-            Target::FetchSdk => &[],
-            Target::FetchToolchain => &[],
-            Target::FetchSources => &[],
-            Target::FetchVendored => DOCKER_RUN_PATHS,
-            Target::UnitTests => DOCKER_RUN_PATHS,
-            Target::Check => &[],
-            Target::CheckFmt => DOCKER_RUN_PATHS,
-            Target::CheckLints => &[],
-            Target::CheckClippy => DOCKER_RUN_PATHS,
-            Target::CheckShell => &[BUILDSYS_TOOLS_DIR],
-            Target::CheckGolangciLint => &[GO_MOD_CACHE, GO_MODULES],
-            Target::CheckMigrations => &[BUILDSYS_ROOT_DIR, BUILDSYS_SOURCES_DIR],
-            Target::BuildTools => RUST_TOOLS_PATHS,
-            Target::PublishSetupTools => RUST_TOOLS_PATHS,
-            Target::InfraTools => RUST_TOOLS_PATHS,
-            Target::PublishTools => RUST_TOOLS_PATHS,
-            Target::BuildSbkeys => RUST_TOOLS_PATHS,
-            Target::CheckCargoVersion => &[CARGO_HOME],
-            Target::BootConfig => &[BOOT_CONFIG_INPUT, BOOT_CONFIG, GO_MOD_CACHE],
-            Target::ValidateBootConfig => &[BOOT_CONFIG_INPUT, BOOT_CONFIG, GO_MOD_CACHE],
-            Target::BuildPackage => BUILDSYS_PATHS,
-            Target::BuildVariant => BUILDSYS_PATHS,
-            Target::CheckLicenses => DOCKER_RUN_PATHS,
-            Target::FetchLicenses => DOCKER_RUN_PATHS,
-            Target::Build => &[],
-            Target::Tuftool => RUST_TOOLS_PATHS,
-            Target::CreateInfra => RUST_TOOLS_PATHS,
-            Target::PublishSetup => PUBLISH_PATHS,
-            Target::PublishSetupWithoutKey => PUBLISH_PATHS,
-            Target::ValidateRepo => PUBLISH_PATHS,
-            Target::CheckRepoExpirations => PUBLISH_PATHS,
-            Target::RefreshRepo => PUBLISH_REFRESH_REPO_PATHS,
-            Target::Ami => PUBLISH_AMI_PATHS,
-            Target::AmiPublic => PUBLISH_AMI_PATHS,
-            Target::AmiPrivate => PUBLISH_AMI_PATHS,
-            Target::GrantAmi => PUBLISH_AMI_PATHS,
-            Target::RevokeAmi => PUBLISH_AMI_PATHS,
-            Target::ValidateAmi => PUBLISH_AMI_PATHS,
-            Target::Ssm => PUBLISH_SSM_PATH,
-            Target::PromoteSsm => PUBLISH_SSM_PATH,
-            Target::ValidateSsm => PUBLISH_SSM_PATH,
-            Target::UploadOvaBase => VMWARE_PATHS,
-            Target::UploadOva => VMWARE_PATHS,
-            Target::VmwareTemplate => VMWARE_PATHS,
-            Target::Clean => &[],
-            Target::CleanSources => &[BUILDSYS_TOOLS_DIR],
-            Target::CleanPackages => &[BUILDSYS_PACKAGES_DIR],
-            Target::CleanImages => &[BUILDSYS_IMAGES_DIR],
-            Target::CleanRepos => &[PUBLISH_REPO_BASE_DIR],
-            Target::CleanState => &[BUILDSYS_STATE_DIR],
-            Target::PurgeCache => &[],
-            Target::PurgeGoVendor => &[GO_MOD_CACHE],
-            Target::PurgeCargo => &[CARGO_HOME],
-            Target::TestTools => TESTSYS_PATHS,
-            Target::SetupTest => TESTSYS_PATHS,
-            Target::Test => TESTSYS_PATHS,
-            Target::CleanTest => TESTSYS_PATHS,
-            Target::ResetTest => TESTSYS_PATHS,
-            Target::UninstallTest => TESTSYS_PATHS,
-            Target::PurgeTest => TESTSYS_PATHS,
-            Target::WatchTest => TESTSYS_PATHS,
-            Target::WatchTestAll => TESTSYS_PATHS,
-            Target::LogTest => TESTSYS_PATHS,
-            Target::Testsys => TESTSYS_PATHS,
-            Target::Default => &[],
+            MakefileTarget::SetupBuild => &[],
+            MakefileTarget::Fetch => &[],
+            MakefileTarget::FetchSdk => &[],
+            MakefileTarget::FetchToolchain => &[],
+            MakefileTarget::FetchSources => &[],
+            MakefileTarget::FetchVendored => DOCKER_RUN_PATHS,
+            MakefileTarget::UnitTests => DOCKER_RUN_PATHS,
+            MakefileTarget::Check => &[],
+            MakefileTarget::CheckFmt => DOCKER_RUN_PATHS,
+            MakefileTarget::CheckLints => &[],
+            MakefileTarget::CheckClippy => DOCKER_RUN_PATHS,
+            MakefileTarget::CheckShell => &[BUILDSYS_TOOLS_DIR],
+            MakefileTarget::CheckGolangciLint => &[GO_MOD_CACHE, GO_MODULES],
+            MakefileTarget::CheckMigrations => &[BUILDSYS_ROOT_DIR, BUILDSYS_SOURCES_DIR],
+            MakefileTarget::BuildTools => RUST_TOOLS_PATHS,
+            MakefileTarget::PublishSetupTools => RUST_TOOLS_PATHS,
+            MakefileTarget::InfraTools => RUST_TOOLS_PATHS,
+            MakefileTarget::PublishTools => RUST_TOOLS_PATHS,
+            MakefileTarget::BuildSbkeys => RUST_TOOLS_PATHS,
+            MakefileTarget::CheckCargoVersion => &[CARGO_HOME],
+            MakefileTarget::BootConfig => &[BOOT_CONFIG_INPUT, BOOT_CONFIG, GO_MOD_CACHE],
+            MakefileTarget::ValidateBootConfig => &[BOOT_CONFIG_INPUT, BOOT_CONFIG, GO_MOD_CACHE],
+            MakefileTarget::BuildPackage => BUILDSYS_PATHS,
+            MakefileTarget::BuildVariant => BUILDSYS_PATHS,
+            MakefileTarget::CheckLicenses => DOCKER_RUN_PATHS,
+            MakefileTarget::FetchLicenses => DOCKER_RUN_PATHS,
+            MakefileTarget::Build => &[],
+            MakefileTarget::Tuftool => RUST_TOOLS_PATHS,
+            MakefileTarget::CreateInfra => RUST_TOOLS_PATHS,
+            MakefileTarget::PublishSetup => PUBLISH_PATHS,
+            MakefileTarget::PublishSetupWithoutKey => PUBLISH_PATHS,
+            MakefileTarget::Repo => PUBLISH_PATHS,
+            MakefileTarget::ValidateRepo => PUBLISH_PATHS,
+            MakefileTarget::CheckRepoExpirations => PUBLISH_PATHS,
+            MakefileTarget::RefreshRepo => PUBLISH_REFRESH_REPO_PATHS,
+            MakefileTarget::Ami => PUBLISH_AMI_PATHS,
+            MakefileTarget::AmiPublic => PUBLISH_AMI_PATHS,
+            MakefileTarget::AmiPrivate => PUBLISH_AMI_PATHS,
+            MakefileTarget::GrantAmi => PUBLISH_AMI_PATHS,
+            MakefileTarget::RevokeAmi => PUBLISH_AMI_PATHS,
+            MakefileTarget::ValidateAmi => PUBLISH_AMI_PATHS,
+            MakefileTarget::Ssm => PUBLISH_SSM_PATH,
+            MakefileTarget::PromoteSsm => PUBLISH_SSM_PATH,
+            MakefileTarget::ValidateSsm => PUBLISH_SSM_PATH,
+            MakefileTarget::UploadOvaBase => VMWARE_PATHS,
+            MakefileTarget::UploadOva => VMWARE_PATHS,
+            MakefileTarget::VmwareTemplate => VMWARE_PATHS,
+            MakefileTarget::Clean => &[],
+            MakefileTarget::CleanSources => &[BUILDSYS_TOOLS_DIR],
+            MakefileTarget::CleanPackages => &[BUILDSYS_PACKAGES_DIR],
+            MakefileTarget::CleanImages => &[BUILDSYS_IMAGES_DIR],
+            MakefileTarget::CleanRepos => &[PUBLISH_REPO_BASE_DIR],
+            MakefileTarget::CleanState => &[BUILDSYS_STATE_DIR],
+            MakefileTarget::PurgeCache => &[],
+            MakefileTarget::PurgeGoVendor => &[GO_MOD_CACHE],
+            MakefileTarget::PurgeCargo => &[CARGO_HOME],
+            MakefileTarget::TestTools => TESTSYS_PATHS,
+            MakefileTarget::SetupTest => TESTSYS_PATHS,
+            MakefileTarget::Test => TESTSYS_PATHS,
+            MakefileTarget::CleanTest => TESTSYS_PATHS,
+            MakefileTarget::ResetTest => TESTSYS_PATHS,
+            MakefileTarget::UninstallTest => TESTSYS_PATHS,
+            MakefileTarget::PurgeTest => TESTSYS_PATHS,
+            MakefileTarget::WatchTest => TESTSYS_PATHS,
+            MakefileTarget::WatchTestAll => TESTSYS_PATHS,
+            MakefileTarget::LogTest => TESTSYS_PATHS,
+            MakefileTarget::Testsys => TESTSYS_PATHS,
+            MakefileTarget::Default => &[],
         }
     }
+}
+
+fn find_dependencies(task: MakefileTarget) -> Result<HashSet<MakefileTarget>> {
+    let mut tasks = HashSet::new();
+    find_deps_recursively(&mut tasks, task)?;
+    Ok(tasks)
+}
+
+fn find_deps_recursively(
+    set: &mut HashSet<MakefileTarget>,
+    current_task: MakefileTarget,
+) -> Result<()> {
+    set.insert(current_task);
+    // Annotate the type my IDE
+    let task_dependencies: &HashMap<MakefileTarget, Vec<MakefileTarget>> = &TASK_DEPENDENCIES;
+    let deps = task_dependencies.get(&current_task).context(format!(
+        "Unable to find deps for '{}'. This is a bug.",
+        current_task
+    ))?;
+    for dep in deps {
+        find_deps_recursively(set, *dep)?;
+    }
+    Ok(())
+}
+
+fn all_necessary_path_vars(task: MakefileTarget) -> Result<HashSet<PathVar>> {
+    let all_tasks = find_dependencies(task).context(format!(
+        "Unable to find path variables for task '{}' because dependencies could not be resolved.",
+        task
+    ))?;
+
+    let mut vars = HashSet::new();
+    for task in all_tasks {
+        vars.extend(task.paths().into_iter());
+    }
+    Ok(vars)
 }

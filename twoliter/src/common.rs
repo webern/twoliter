@@ -1,5 +1,7 @@
 use anyhow::{ensure, Context, Result};
 use log::{self, debug, LevelFilter};
+use serde::{Deserialize, Serialize};
+use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use tokio::process::Command;
 
 /// Run a `tokio::process::Command` and return a `Result` letting us know whether or not it worked.
@@ -74,3 +76,80 @@ pub(crate) mod fs {
             .context(format!("Unable to open file '{}", path.as_ref().display()))
     }
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub(crate) enum MakefileTarget {
+    Setup,
+    SetupBuild,
+    Fetch,
+    FetchSdk,
+    FetchToolchain,
+    FetchSources,
+    FetchVendored,
+    UnitTests,
+    Check,
+    CheckFmt,
+    CheckLints,
+    CheckClippy,
+    CheckShell,
+    CheckGolangciLint,
+    CheckMigrations,
+    BuildTools,
+    PublishSetupTools,
+    InfraTools,
+    PublishTools,
+    BuildSbkeys,
+    CheckCargoVersion,
+    BootConfig,
+    ValidateBootConfig,
+    BuildPackage,
+    BuildVariant,
+    CheckLicenses,
+    FetchLicenses,
+    Build,
+    Tuftool,
+    CreateInfra,
+    PublishSetup,
+    PublishSetupWithoutKey,
+    Repo,
+    ValidateRepo,
+    CheckRepoExpirations,
+    RefreshRepo,
+    Ami,
+    AmiPublic,
+    AmiPrivate,
+    GrantAmi,
+    RevokeAmi,
+    ValidateAmi,
+    Ssm,
+    PromoteSsm,
+    ValidateSsm,
+    UploadOvaBase,
+    UploadOva,
+    VmwareTemplate,
+    Clean,
+    CleanSources,
+    CleanPackages,
+    CleanImages,
+    CleanRepos,
+    CleanState,
+    PurgeCache,
+    PurgeGoVendor,
+    PurgeCargo,
+    TestTools,
+    SetupTest,
+    Test,
+    CleanTest,
+    ResetTest,
+    UninstallTest,
+    PurgeTest,
+    WatchTest,
+    WatchTestAll,
+    LogTest,
+    Testsys,
+    Default,
+}
+
+derive_display_from_serialize!(MakefileTarget);
+derive_fromstr_from_deserialize!(MakefileTarget);
