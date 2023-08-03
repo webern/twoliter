@@ -17,16 +17,16 @@ pub(crate) struct Exec {
     #[clap(long = "project-path")]
     project_path: Option<PathBuf>,
 
+    /// It is required to pass this instead of using `CARGO_HOME` so that there can be no confusion
+    /// between the `CARGO_HOME` that is intended for the build, and the user's default
+    /// `CARGO_HOME`.
+    cargo_home: PathBuf,
+
     // /// Path to the docker daemon socket.
     // #[clap(long = "docker-socket", default_value = "/var/run/docker.sock")]
     // docker_socket: String,
     /// Cargo make task. E.g. the word "build" if we want to execute `cargo make build`.
     makefile_task: String,
-
-    /// It is required to pass this instead of using `CARGO_HOME` so that there can be no confusion
-    /// between the `CARGO_HOME` that is intended for the build, and the user's default
-    /// `CARGO_HOME`.
-    cargo_home: PathBuf,
 
     /// Arguments to be passed to cargo make
     additional_args: Vec<String>,
