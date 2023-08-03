@@ -14,12 +14,13 @@ use tokio::process::Command;
 #[derive(Debug, Parser)]
 pub(crate) struct Exec {
     /// Path to Twoliter.toml. Will search for Twoliter.toml when absent.
-    #[clap(long = "project-path")]
+    #[clap(long)]
     project_path: Option<PathBuf>,
 
     /// It is required to pass this instead of using `CARGO_HOME` so that there can be no confusion
     /// between the `CARGO_HOME` that is intended for the build, and the user's default
     /// `CARGO_HOME`.
+    #[clap(long)]
     cargo_home: PathBuf,
 
     // /// Path to the docker daemon socket.
