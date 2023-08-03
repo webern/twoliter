@@ -53,10 +53,13 @@ async fn unpack_tarball(path: impl AsRef<Path>, out_dir: impl AsRef<Path>) -> Re
     Ok(())
 }
 
+// TODO - this is super weird because I'm no longer making a Twoliter container.
 /// Prepare a directory for the `docker build` command that will create the twoliter container.
 /// Returns the path to the dockerfile and the path to the context directory as
 /// `(dockerfile, context)`.
-async fn prepare_dir(dir: impl AsRef<Path>) -> Result<(impl AsRef<Path>, impl AsRef<Path>)> {
+pub(crate) async fn prepare_dir(
+    dir: impl AsRef<Path>,
+) -> Result<(impl AsRef<Path>, impl AsRef<Path>)> {
     let dir = dir.as_ref();
     let context = dir.join(CONTEXT);
     let files = context.join(FILES);

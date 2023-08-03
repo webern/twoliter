@@ -1,6 +1,7 @@
 mod commands;
 mod image;
-mod twoliter;
+// TODO return this to private
+pub(crate) mod twoliter;
 
 pub(crate) use self::commands::DockerBuild;
 pub(crate) use self::image::{ImageArchUri, ImageUri};

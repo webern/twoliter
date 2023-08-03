@@ -1,9 +1,11 @@
 use crate::common::exec;
+use crate::docker::twoliter::prepare_dir;
 use crate::project;
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, trace};
 use std::path::{Path, PathBuf};
+use tempfile::TempDir;
 use tokio::process::Command;
 
 /// Run a cargo make command in Twoliter's build environment. Certain environment variable paths
@@ -20,6 +22,11 @@ pub(crate) struct Exec {
     // docker_socket: String,
     /// Cargo make task. E.g. the word "build" if we want to execute `cargo make build`.
     makefile_task: String,
+
+    /// It is required to pass this instead of using `CARGO_HOME` so that there can be no confusion
+    /// between the `CARGO_HOME` that is intended for the build, and the user's default
+    /// `CARGO_HOME`.
+    cargo_home: PathBuf,
 
     /// Arguments to be passed to cargo make
     additional_args: Vec<String>,
@@ -53,8 +60,11 @@ impl Exec {
         //     ..Default::default()
         // };
 
-        // TODO - a real path
-        let makefile = PathBuf::from("foo");
+        // Write the makefile to a tempdir.
+        // TODO - we should use a stable dir for this instead of unpacking it every time.
+        let temp_dir = TempDir::new().context("Unable to create tempdir for Makefile.toml")?;
+        let (_, context) = prepare_dir(&temp_dir).await?;
+        let makefile = context.as_ref().join("files").join("Makefile.toml");
 
         let mut args = vec![
             "make".to_string(),
@@ -99,6 +109,8 @@ impl Exec {
             }
         }
 
+        args.push("-e".to_string());
+        args.push(format!("CARGO_HOME={}", self.cargo_home.display()));
         args.push(self.makefile_task.clone());
 
         // docker_command = docker_command
@@ -237,12 +249,11 @@ impl Exec {
 
 /// A list of environment variables that don't conform to naming conventions, but we need to pass
 /// through to the `cargo make` invocation.
-const ENV_VARS: [&str; 14] = [
+const ENV_VARS: [&str; 13] = [
     "ALLOW_MISSING_KEY",
     "AMI_DATA_FILE_SUFFIX",
     "BOOT_CONFIG",
     "BOOT_CONFIG_INPUT",
-    "CARGO_HOME",
     "CARGO_MAKE_CARGO_ARGS",
     "CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH",
     "CARGO_MAKE_TESTSYS_ARGS",
@@ -280,7 +291,7 @@ fn canonicalize(path: impl AsRef<Path>) -> Result<PathBuf> {
 
 /// We have to search through the arguments for calls that look like this:
 /// `cargo make testsys test -f /some/path`
-fn find_testsys_test_path<I, S>(iter: I) -> Option<PathBuf>
+fn _find_testsys_test_path<I, S>(iter: I) -> Option<PathBuf>
 where
     I: IntoIterator<Item = S>,
     S: AsRef<str>,
