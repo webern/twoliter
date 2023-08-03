@@ -1,11 +1,10 @@
 use crate::common::exec;
-use crate::docker::twoliter::prepare_dir;
 use crate::project;
+use crate::tools::install_tools;
 use anyhow::{Context, Result};
 use clap::Parser;
 use log::{debug, trace};
 use std::path::{Path, PathBuf};
-use tempfile::TempDir;
 use tokio::process::Command;
 
 /// Run a cargo make command in Twoliter's build environment. Certain environment variable paths
@@ -32,30 +31,17 @@ pub(crate) struct Exec {
 
 impl Exec {
     pub(super) async fn run(&self) -> Result<()> {
-        let (_project, path) = project::load_or_find_project(self.project_path.clone()).await?;
-        let project_dir = path.parent().context(format!(
-            "Unable to find the parent directory containing project file '{}'",
-            path.display()
-        ))?;
-        // TODO - get smart about sdk: https://github.com/bottlerocket-os/twoliter/issues/11
-        // let sdk = project.sdk.clone().unwrap_or_default();
-        // TODO - peek at cargo make args to see if we can figure out what the arch is (so we don't
-        // pull two SDK containers). The arch for Twoliter execution doesn't matter.
-        // let image = docker::create_twoliter_image_if_not_exists(&sdk.uri("x86_64")).await?;
-
-        // Write the makefile to a tempdir.
-        // TODO - we should use a stable dir for this instead of unpacking it every time.
-        let temp_dir = TempDir::new().context("Unable to create tempdir for Makefile.toml")?;
-        let (_, context) = prepare_dir(&temp_dir).await?;
-        let makefile = context.as_ref().join("files").join("Makefile.toml");
+        let project = project::load_or_find_project(self.project_path.clone()).await?;
+        install_tools(project.tools_dir()).await?;
+        let makefile_path = project.tools_dir().join("Makefile.toml");
 
         let mut args = vec![
             "make".to_string(),
             "--disable-check-for-updates".to_string(),
             "--makefile".to_string(),
-            makefile.display().to_string(),
+            makefile_path.display().to_string(),
             "--cwd".to_string(),
-            project_dir.display().to_string(),
+            project.project_dir().display().to_string(),
         ];
 
         for (key, val) in std::env::vars() {

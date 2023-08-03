@@ -1,5 +1,6 @@
 mod build;
 mod exec;
+mod install;
 
 use self::build::BuildCommand;
 use crate::cmd::exec::Exec;

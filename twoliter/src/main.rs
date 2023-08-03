@@ -11,6 +11,7 @@ mod project;
 /// Test code that should only be compiled when running tests.
 #[cfg(test)]
 mod test;
+mod tools;
 
 /// `anyhow` prints a nicely formatted error message with `Debug`, so we can return a result from
 /// the `main` function.
