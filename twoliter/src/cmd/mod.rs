@@ -4,6 +4,7 @@ mod install;
 
 use self::build::BuildCommand;
 use crate::cmd::exec::Exec;
+use crate::cmd::install::InstallCommand;
 use anyhow::Result;
 use clap::Parser;
 use env_logger::Builder;
@@ -31,6 +32,10 @@ pub(crate) enum Subcommand {
     #[clap(subcommand)]
     Build(BuildCommand),
 
+    /// Install items that Twoliter needs on the build host.
+    #[clap(subcommand)]
+    Install(InstallCommand),
+
     Exec(Exec),
 }
 
@@ -38,6 +43,7 @@ pub(crate) enum Subcommand {
 pub(super) async fn run(args: Args) -> Result<()> {
     match args.subcommand {
         Subcommand::Build(build_command) => build_command.run().await,
+        Subcommand::Install(install_command) => install_command.run().await,
         Subcommand::Exec(exec_args) => exec_args.run().await,
     }
 }
