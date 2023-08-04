@@ -13,7 +13,7 @@ pub(crate) struct ImageUri {
 
 impl ImageUri {
     /// Create a new `ImageUri`.
-    pub(crate) fn _new<S1, S2>(registry: Option<String>, repo: S1, tag: S2) -> Self
+    pub(crate) fn new<S1, S2>(registry: Option<String>, repo: S1, tag: S2) -> Self
     where
         S1: Into<String>,
         S2: Into<String>,
@@ -85,7 +85,7 @@ impl ImageArchUri {
 
     /// Returns the `ImageArchUri` for use with docker, e.g.
     /// `public.ecr.aws/bottlerocket/bottlerocket-sdk-x86_64:v0.1.0`
-    pub(crate) fn _uri(&self) -> String {
+    pub(crate) fn uri(&self) -> String {
         match &self.registry {
             None => format!("{}-{}:{}", self.name, self.arch, self.tag),
             Some(registry) => format!("{}/{}-{}:{}", registry, self.name, self.arch, self.tag),
