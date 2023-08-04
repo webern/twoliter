@@ -1,10 +1,8 @@
 use crate::common::fs;
-use crate::project;
 use anyhow::{Context, Result};
-use clap::Parser;
 use flate2::read::GzDecoder;
 use log::debug;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use tar::Archive;
 
 const TARBALL_DATA: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/tools.tar.gz"));

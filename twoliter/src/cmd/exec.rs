@@ -1,10 +1,10 @@
 use crate::common::exec;
 use crate::project;
 use crate::tools::install_tools;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
 use log::{debug, trace};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use tokio::process::Command;
 
 /// Run a cargo make command in Twoliter's build environment. Certain environment variable paths
@@ -101,13 +101,6 @@ fn is_build_system_env(key: impl AsRef<str>) -> bool {
     } else {
         ENV_VARS.contains(&key)
     }
-}
-
-fn canonicalize(path: impl AsRef<Path>) -> Result<PathBuf> {
-    path.as_ref().canonicalize().context(format!(
-        "Unable to canonicalize the path '{}'",
-        path.as_ref().display(),
-    ))
 }
 
 #[test]

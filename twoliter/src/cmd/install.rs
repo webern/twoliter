@@ -1,13 +1,8 @@
-use crate::common::fs;
 use crate::project;
 use crate::tools::install_tools;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use clap::Parser;
-use flate2::read::GzDecoder;
-use std::path::{Path, PathBuf};
-use tar::Archive;
-
-const TARBALL_DATA: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/tools.tar.gz"));
+use std::path::PathBuf;
 
 #[derive(Debug, Parser)]
 pub(crate) enum InstallCommand {
