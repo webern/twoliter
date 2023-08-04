@@ -3,6 +3,7 @@ use crate::project;
 use anyhow::{Context, Result};
 use clap::Parser;
 use flate2::read::GzDecoder;
+use log::debug;
 use std::path::{Path, PathBuf};
 use tar::Archive;
 
@@ -22,6 +23,7 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>) -> Result<()> {
 }
 
 async fn unpack_tarball(tools_dir: impl AsRef<Path>) -> Result<()> {
+    // TODO - check and return if already installed.
     let tools_dir = tools_dir.as_ref();
     let tar = GzDecoder::new(TARBALL_DATA);
     let mut archive = Archive::new(tar);
@@ -29,6 +31,7 @@ async fn unpack_tarball(tools_dir: impl AsRef<Path>) -> Result<()> {
         "Unable to unpack tarball into directory '{}'",
         tools_dir.display()
     ))?;
+    debug!("Installed tools to '{}'", tools_dir.display());
     Ok(())
 }
 
