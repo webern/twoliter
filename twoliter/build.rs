@@ -45,6 +45,7 @@ fn main() {
     let tar_data = buf_writer.get_ref();
     let mut hasher = Sha256::new();
     hasher.update(tar_data);
+    // TODO - this hash seems unstable
     let hashed = hasher.finalize();
     let hash = format!("{:02X}", hashed).to_ascii_lowercase();
     fs::write(&tar_path, tar_data)
