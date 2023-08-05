@@ -32,7 +32,7 @@ pub(crate) struct Exec {
 impl Exec {
     pub(super) async fn run(&self) -> Result<()> {
         let project = project::load_or_find_project(self.project_path.clone()).await?;
-        install_tools(project.tools_dir()).await?;
+        install_tools(project.tools_dir(), false).await?;
         let makefile_path = project.tools_dir().join("Makefile.toml");
 
         let mut args = vec![

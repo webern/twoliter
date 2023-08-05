@@ -75,6 +75,12 @@ pub(crate) mod fs {
             .await
             .context(format!("Unable to open file '{}", path.as_ref().display()))
     }
+
+    pub async fn read_to_string(path: impl AsRef<Path>) -> Result<String> {
+        tokio::fs::read_to_string(&path)
+            .await
+            .context(format!("Unable to read file '{}'", path.as_ref().display()))
+    }
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]

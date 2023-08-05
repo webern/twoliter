@@ -1,13 +1,22 @@
 use crate::common::fs;
+use crate::tools_hash::TOOLS_HASH;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
-use log::debug;
+use log::{debug, warn};
 use std::path::Path;
 use tar::Archive;
 
 const TARBALL_DATA: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/tools.tar.gz"));
 
-pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>) -> Result<()> {
+pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> Result<()> {
+    let tools_dir = tools_dir.as_ref();
+    if !force && !should_install(tools_dir).await {
+        debug!("Not installing tools because hashes matched");
+        return Ok(());
+    }
+
+    debug!("Installing tools to '{}'", tools_dir.display());
+
     fs::create_dir_all(&tools_dir)
         .await
         .context("Unable to create a directory for Twoliter's tools")?;
@@ -17,7 +26,33 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>) -> Result<()> {
         .await
         .context("Unable to install tools")?;
 
+    // Write out a file that can be used to detect what version of the tools has been installed.
+    let installed = tools_dir.join("installed");
+    fs::write(&installed, &TOOLS_HASH).await.context(format!(
+        "Unable to write the tools hash to '{}'",
+        installed.display(),
+    ))?;
+
     Ok(())
+}
+
+async fn should_install(tools_dir: &Path) -> bool {
+    let install_file_path = tools_dir.join("install");
+    if !install_file_path.is_file() {
+        return true;
+    }
+    let installed = match fs::read_to_string(&install_file_path).await {
+        Ok(s) => s,
+        Err(e) => {
+            warn!(
+                "Unable to read file '{}', installing tools anyway: {}",
+                install_file_path.display(),
+                e
+            );
+            return true;
+        }
+    };
+    installed != TOOLS_HASH
 }
 
 async fn unpack_tarball(tools_dir: impl AsRef<Path>) -> Result<()> {

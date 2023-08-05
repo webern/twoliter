@@ -23,12 +23,16 @@ pub(crate) struct InstallTools {
     /// Path to Twoliter.toml. Will search for Twoliter.toml when absent.
     #[clap(long)]
     project_path: Option<PathBuf>,
+
+    /// Install anyway, even if we detect that the right version is already installed.
+    #[clap(long)]
+    force: bool,
 }
 
 impl InstallTools {
     pub(super) async fn run(&self) -> Result<()> {
         let project = project::load_or_find_project(self.project_path.clone()).await?;
-        install_tools(project.project_dir()).await?;
+        install_tools(project.project_dir(), self.force).await?;
         Ok(())
     }
 }

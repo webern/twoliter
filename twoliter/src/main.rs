@@ -12,6 +12,7 @@ mod project;
 #[cfg(test)]
 mod test;
 mod tools;
+mod tools_hash;
 
 /// `anyhow` prints a nicely formatted error message with `Debug`, so we can return a result from
 /// the `main` function.
