@@ -2,7 +2,7 @@ use crate::common::fs;
 use crate::tools_hash::TOOLS_HASH;
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
-use log::{debug, warn};
+use log::{debug, trace, warn};
 use std::path::Path;
 use tar::Archive;
 
@@ -15,7 +15,7 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> R
         return Ok(());
     }
 
-    debug!("Installing tools to '{}'", tools_dir.display());
+    trace!("Installing tools to '{}'", tools_dir.display());
 
     fs::create_dir_all(&tools_dir)
         .await
@@ -39,6 +39,10 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> R
 async fn should_install(tools_dir: &Path) -> bool {
     let install_file_path = tools_dir.join("install");
     if !install_file_path.is_file() {
+        trace!(
+            "Installing because this file was not found '{}",
+            install_file_path.display()
+        );
         return true;
     }
     let installed = match fs::read_to_string(&install_file_path).await {
@@ -52,7 +56,12 @@ async fn should_install(tools_dir: &Path) -> bool {
             return true;
         }
     };
-    installed != TOOLS_HASH
+    trace!("installed hash is '{}'", installed);
+    let do_install = installed != TOOLS_HASH;
+    if do_install {
+        debug!("installed '{}', our hash '{}'", installed, TOOLS_HASH)
+    }
+    do_install
 }
 
 async fn unpack_tarball(tools_dir: impl AsRef<Path>) -> Result<()> {
