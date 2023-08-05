@@ -10,7 +10,8 @@ const TARBALL_DATA: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/tools.tar.
 
 pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> Result<()> {
     let tools_dir = tools_dir.as_ref();
-    if !force && !should_install(tools_dir).await {
+    let sentinel_filepath = tools_dir.join("install");
+    if !force && !should_install(&sentinel_filepath).await {
         debug!("Not installing tools because hashes matched");
         return Ok(());
     }
@@ -36,21 +37,20 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> R
     Ok(())
 }
 
-async fn should_install(tools_dir: &Path) -> bool {
-    let install_file_path = tools_dir.join("install");
-    if !install_file_path.is_file() {
+async fn should_install(sentinel_filepath: &Path) -> bool {
+    if !sentinel_filepath.is_file() {
         trace!(
             "Installing because this file was not found '{}",
-            install_file_path.display()
+            sentinel_filepath.display()
         );
         return true;
     }
-    let installed = match fs::read_to_string(&install_file_path).await {
+    let installed = match fs::read_to_string(&sentinel_filepath).await {
         Ok(s) => s,
         Err(e) => {
             warn!(
                 "Unable to read file '{}', installing tools anyway: {}",
-                install_file_path.display(),
+                sentinel_filepath.display(),
                 e
             );
             return true;
