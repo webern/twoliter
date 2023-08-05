@@ -10,7 +10,7 @@ const TARBALL_DATA: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/tools.tar.
 
 pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> Result<()> {
     let tools_dir = tools_dir.as_ref();
-    let sentinel_filepath = tools_dir.join("install");
+    let sentinel_filepath = tools_dir.join("installed");
     if !force && !should_install(&sentinel_filepath).await {
         debug!("Not installing tools because hashes matched");
         return Ok(());
@@ -28,11 +28,12 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> R
         .context("Unable to install tools")?;
 
     // Write out a file that can be used to detect what version of the tools has been installed.
-    let installed = tools_dir.join("installed");
-    fs::write(&installed, &TOOLS_HASH).await.context(format!(
-        "Unable to write the tools hash to '{}'",
-        installed.display(),
-    ))?;
+    fs::write(&sentinel_filepath, &TOOLS_HASH)
+        .await
+        .context(format!(
+            "Unable to write the tools hash to '{}'",
+            sentinel_filepath.display(),
+        ))?;
 
     Ok(())
 }
