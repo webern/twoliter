@@ -1,12 +1,15 @@
 use bytes::BufMut;
 use flate2::write::GzEncoder;
 use flate2::Compression;
+use sha2::digest::HashMarker;
 use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 use std::{env, fs};
 
 const DATA_INPUT_DIR: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/embedded");
 const TOOLS_HASH_RS_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/src/tools_hash.rs");
+
+// type Hasher = x;
 
 fn main() {
     println!("cargo:rerun-if-changed={}", DATA_INPUT_DIR);
@@ -44,6 +47,7 @@ fn main() {
     drop(tar);
     let tar_data = buf_writer.get_ref();
     let mut hasher = Sha256::new();
+    foo(hasher);
     hasher.update(tar_data);
     // TODO - this hash seems unstable
     let hashed = hasher.finalize();
