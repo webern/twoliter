@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1.4.3
 ARG BASE
 FROM ${BASE} as base
 
