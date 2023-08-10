@@ -67,7 +67,7 @@ impl Exec {
     }
 }
 
-/// A list of environment variables that don't conform to naming conventions, but we need to pass
+/// A list of environment variables that don't conform to naming conventions but need to be passed
 /// through to the `cargo make` invocation.
 const ENV_VARS: [&str; 13] = [
     "ALLOW_MISSING_KEY",
