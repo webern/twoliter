@@ -88,19 +88,12 @@ const ENV_VARS: [&str; 13] = [
 
 fn is_build_system_env(key: impl AsRef<str>) -> bool {
     let key = key.as_ref();
-    if key.starts_with("BOOT_CONFIG") {
-        true
-    } else if key.starts_with("BUILDSYS_") {
-        true
-    } else if key.starts_with("PUBLISH_") {
-        true
-    } else if key.starts_with("REPO_") {
-        true
-    } else if key.starts_with("TESTSYS_") {
-        true
-    } else {
-        ENV_VARS.contains(&key)
-    }
+    key.starts_with("BUILDSYS_") || 
+    key.starts_with("PUBLISH_") || 
+    key.starts_with("REPO_") ||
+    key.starts_with("TESTSYS_") || 
+    key.starts_with("BOOT_CONFIG") ||
+    ENV_VARS.contains(&key)
 }
 
 #[test]
