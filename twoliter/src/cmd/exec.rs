@@ -46,7 +46,7 @@ impl Exec {
 
         for (key, val) in std::env::vars() {
             if is_build_system_env(key.as_str()) {
-                debug!("Passing env var {} to cargo make", key);
+                trace!("Passing env var {} to cargo make", key);
                 args.push("-e".to_string());
                 args.push(format!("{}={}", key, val));
             }
