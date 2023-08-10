@@ -12,7 +12,7 @@ use tokio::process::Command;
 /// these configurable paths may need to be mounted by Twoliter.
 #[derive(Debug, Parser)]
 pub(crate) struct Exec {
-    /// Path to Twoliter.toml. Will search for Twoliter.toml when absent.
+    /// Path to the project file. Will search for Twoliter.toml when absent.
     #[clap(long)]
     project_path: Option<PathBuf>,
 
