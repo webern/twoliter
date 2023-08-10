@@ -9,7 +9,7 @@ pub(crate) async fn exec(cmd: &mut Command) -> Result<()> {
     debug!("Running: {:?}", cmd);
 
     match log::max_level() {
-        // For non-debugging levels of logging we capture stdout and stderr
+        // For quiet levels of logging we capture stdout and stderr
         LevelFilter::Off | LevelFilter::Error | LevelFilter::Warn => {
             let output = cmd
                 .output()
