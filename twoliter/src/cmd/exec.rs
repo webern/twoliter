@@ -25,7 +25,8 @@ pub(crate) struct Exec {
     /// Cargo make task. E.g. the word "build" if we want to execute `cargo make build`.
     makefile_task: String,
 
-    /// Arguments to be passed to cargo make
+    /// Uninspected arguments to be passed to cargo make after the target name. For example, --foo
+    /// in the following command : cargo make test --foo.
     additional_args: Vec<String>,
 }
 
