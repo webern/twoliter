@@ -32,7 +32,7 @@ fn main() {
     // This is the filepath to the tarball we will create.
     let tar_path = out_dir.join("tools.tar.gz");
 
-    // TODO - name this Makefile.toml when we have ported the Bottlerocket monorepo git history.
+    // TODO - use Makefile.toml when we have imported the Bottlerocket monorepo git history.
     let makefile_source = data_input_dir.join("Makefile.temp.toml");
     copy_file(makefile_source, tools_dir.join("Makefile.toml"));
 
