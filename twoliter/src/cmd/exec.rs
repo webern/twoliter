@@ -49,8 +49,6 @@ impl Exec {
                 debug!("Passing env var {} to cargo make", key);
                 args.push("-e".to_string());
                 args.push(format!("{}={}", key, val));
-            } else {
-                trace!("Not passing env var {} to cargo make", key);
             }
         }
 
