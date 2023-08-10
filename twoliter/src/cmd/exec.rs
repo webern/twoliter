@@ -16,9 +16,9 @@ pub(crate) struct Exec {
     #[clap(long)]
     project_path: Option<PathBuf>,
 
-    /// It is required to pass this instead of using `CARGO_HOME` so that there can be no confusion
-    /// between the `CARGO_HOME` that is intended for the build, and the user's default
-    /// `CARGO_HOME`.
+    /// Twoliter does not read this from the CARGO_HOME environment variable to avoid any possible
+    /// confusion between a CARGO_HOME set on the system, and the path intended for the Bottlerocket
+    /// build.
     #[clap(long)]
     cargo_home: PathBuf,
 
