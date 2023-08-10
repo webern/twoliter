@@ -58,7 +58,6 @@ impl Exec {
         args.push(format!("CARGO_HOME={}", self.cargo_home.display()));
         args.push(self.makefile_task.clone());
 
-        // These have to go last because the last of these might be the Makefile.toml target.
         for cargo_make_arg in &self.additional_args {
             args.push(cargo_make_arg.clone());
         }
