@@ -86,6 +86,7 @@ const ENV_VARS: [&str; 13] = [
     "VMWARE_VM_NAME_DEFAULT",
 ];
 
+/// Returns `true` if `key` is an environment variable that needs to be passed to `cargo make`.
 fn is_build_system_env(key: impl AsRef<str>) -> bool {
     let key = key.as_ref();
     key.starts_with("BUILDSYS_") || 
