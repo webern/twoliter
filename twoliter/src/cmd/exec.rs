@@ -63,8 +63,7 @@ impl Exec {
             args.push(cargo_make_arg.clone());
         }
 
-        exec(Command::new("cargo").args(args)).await?;
-        Ok(())
+        exec(Command::new("cargo").args(args)).await
     }
 }
 
