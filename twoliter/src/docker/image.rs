@@ -26,7 +26,7 @@ impl ImageUri {
     }
 
     /// Returns the `ImageUri` for use with docker, e.g. `public.ecr.aws/myregistry/myrepo:v0.1.0`
-    pub(crate) fn _uri(&self) -> String {
+    pub(crate) fn uri(&self) -> String {
         match &self.registry {
             None => format!("{}:{}", self.repo, self.tag),
             Some(registry) => format!("{}/{}:{}", registry, self.repo, self.tag),
