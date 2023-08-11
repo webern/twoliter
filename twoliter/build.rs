@@ -41,7 +41,10 @@ fn main() {
     let enc = GzEncoder::new(&mut buf_writer, Compression::default());
     let mut tar = tar::Builder::new(enc);
     tar.append_dir_all("", &tools_dir).unwrap();
+    
+    // Drop tar object to ensure any finalizing steps are done.
     drop(tar);
+    
     let tar_data = buf_writer.get_ref();
 
     // Create a hash of the in-memory tarball to be used when installing tools.
