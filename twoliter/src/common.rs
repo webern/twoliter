@@ -23,7 +23,7 @@ pub(crate) async fn exec(cmd: &mut Command) -> Result<()> {
             );
         }
 
-        // For debugging we stream to stdout and stderr.
+        // For less quiet log levels we stream to stdout and stderr.
         LevelFilter::Info | LevelFilter::Debug | LevelFilter::Trace => {
             let status = cmd
                 .status()
