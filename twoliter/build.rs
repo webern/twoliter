@@ -58,6 +58,7 @@ fn main() {
     fs::write(&tools_hash_rs_path, tools_hash_rs_content).unwrap();
 }
 
+// Copy a file and provide a useful error message if it fails.
 fn copy_file<P1, P2>(source: P1, dest: P2)
 where
     P1: AsRef<Path>,
