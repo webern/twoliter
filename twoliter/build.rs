@@ -11,10 +11,6 @@ const TOOLS_HASH_RS_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/src/tools
 fn main() {
     println!("cargo:rerun-if-changed={}", DATA_INPUT_DIR);
     let data_input_dir = PathBuf::from(DATA_INPUT_DIR);
-    let data_input_dir = data_input_dir.canonicalize().expect(&format!(
-        "Unable to canonicalize '{}'",
-        data_input_dir.display()
-    ));
 
     // This is the directory that cargo creates for us so that we can pass things from the build
     // script to the main compilation phase.

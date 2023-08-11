@@ -1,7 +1,5 @@
 use anyhow::{ensure, Context, Result};
 use log::{self, debug, LevelFilter};
-use serde::{Deserialize, Serialize};
-use serde_plain::{derive_display_from_serialize, derive_fromstr_from_deserialize};
 use tokio::process::Command;
 
 /// Run a `tokio::process::Command` and return a `Result` letting us know whether or not it worked.
@@ -63,14 +61,14 @@ pub(crate) mod fs {
             ))
     }
 
-    pub async fn remove_file(path: impl AsRef<Path>) -> Result<()> {
+    pub async fn _remove_file(path: impl AsRef<Path>) -> Result<()> {
         tokio::fs::remove_file(path.as_ref()).await.context(format!(
             "Unable to remove file '{}'",
             path.as_ref().display()
         ))
     }
 
-    pub async fn open_file(path: impl AsRef<Path>) -> Result<tokio::fs::File> {
+    pub async fn _open_file(path: impl AsRef<Path>) -> Result<tokio::fs::File> {
         tokio::fs::File::open(path.as_ref())
             .await
             .context(format!("Unable to open file '{}", path.as_ref().display()))

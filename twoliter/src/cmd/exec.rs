@@ -3,7 +3,7 @@ use crate::project;
 use crate::tools::install_tools;
 use anyhow::Result;
 use clap::Parser;
-use log::{debug, trace};
+use log::{ trace};
 use std::path::PathBuf;
 use tokio::process::Command;
 

@@ -235,9 +235,9 @@ mod test {
         let subdir = tempdir.path().join("a").join("b").join("c");
         fs::create_dir_all(&subdir).await.unwrap();
         fs::copy(&original_path, &twoliter_toml_path).await.unwrap();
-        let (_, path) = Project::find_and_load(subdir).await.unwrap();
+        let project = Project::find_and_load(subdir).await.unwrap();
 
         // Ensure that the file we loaded was the one we expected to load.
-        assert_eq!(path, twoliter_toml_path);
+        assert_eq!(project.filepath(), twoliter_toml_path);
     }
 }

@@ -70,7 +70,7 @@ impl DockerBuild {
     }
 
     /// Run the `docker build` command.
-    pub(crate) async fn execut(self) -> Result<()> {
+    pub(crate) async fn execute(self) -> Result<()> {
         let mut args = vec!["build".to_string()];
         if let Some(dockerfile) = self.dockerfile.as_ref() {
             args.push("--file".to_string());

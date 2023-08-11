@@ -66,7 +66,6 @@ async fn should_install(sentinel_filepath: &Path) -> bool {
 }
 
 async fn unpack_tarball(tools_dir: impl AsRef<Path>) -> Result<()> {
-    // TODO - check and return if already installed.
     let tools_dir = tools_dir.as_ref();
     let tar = GzDecoder::new(TARBALL_DATA);
     let mut archive = Archive::new(tar);
@@ -76,13 +75,4 @@ async fn unpack_tarball(tools_dir: impl AsRef<Path>) -> Result<()> {
     ))?;
     debug!("Installed tools to '{}'", tools_dir.display());
     Ok(())
-}
-
-#[tokio::test]
-async fn test_prepare_dir() {
-    let temp_dir = tempfile::TempDir::new().unwrap();
-    let (dockerfile, context) = prepare_dir(&temp_dir).await.unwrap();
-    assert!(dockerfile.as_ref().is_file());
-    assert!(context.as_ref().is_dir());
-    assert!(context.as_ref().join(FILES).join("Makefile.toml").is_file())
 }

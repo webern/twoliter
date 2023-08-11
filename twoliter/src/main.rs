@@ -5,7 +5,6 @@ use clap::Parser;
 mod cmd;
 mod common;
 mod docker;
-mod makefile;
 mod project;
 mod tools;
 mod tools_hash;
