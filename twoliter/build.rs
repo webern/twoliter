@@ -43,9 +43,10 @@ fn main() {
     tar.append_dir_all("", &tools_dir).unwrap();
     drop(tar);
     let tar_data = buf_writer.get_ref();
+
+    // Create a hash of the in-memory tarball to be used when installing tools.
     let mut hasher = Sha256::new();
     hasher.update(tar_data);
-    // TODO - this hash seems unstable
     let hashed = hasher.finalize();
     let hash = format!("{:02X}", hashed).to_ascii_lowercase();
     
