@@ -50,6 +50,7 @@ fn main() {
     let hash = format!("{:02X}", hashed).to_ascii_lowercase();
     fs::write(&tar_path, tar_data)
         .expect(&format!("Unable to write to file '{}'", tar_path.display()));
+    // Write the tarball hash to a constant in a generated Rust filethat can be used during install.
     let tools_hash_rs_path = PathBuf::from(TOOLS_HASH_RS_PATH);
     let tools_hash_rs_content = format!(
         "/*! Generated file. !*/\n\npub(crate) const TOOLS_HASH: &str = \"{}\";",
