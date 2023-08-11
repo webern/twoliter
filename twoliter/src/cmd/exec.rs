@@ -7,25 +7,25 @@ use log::{debug, trace};
 use std::path::PathBuf;
 use tokio::process::Command;
 
-/// Run a cargo make command in Twoliter's build environment. Certain environment variable paths
-/// from Makefile.toml are taken here as explicit arguments so that the caller can decide which of
-/// these configurable paths may need to be mounted by Twoliter.
+/// Run a cargo make command in Twoliter's build environment. Known Makefile.toml environment
+/// variables will be passed-through to the cargo make invocation.
 #[derive(Debug, Parser)]
 pub(crate) struct Exec {
-    /// Path to Twoliter.toml. Will search for Twoliter.toml when absent.
+    /// Path to the project file. Will search for Twoliter.toml when absent.
     #[clap(long)]
     project_path: Option<PathBuf>,
 
-    /// It is required to pass this instead of using `CARGO_HOME` so that there can be no confusion
-    /// between the `CARGO_HOME` that is intended for the build, and the user's default
-    /// `CARGO_HOME`.
+    /// Twoliter does not read this from the CARGO_HOME environment variable to avoid any possible
+    /// confusion between a CARGO_HOME set on the system, and the path intended for the Bottlerocket
+    /// build.
     #[clap(long)]
     cargo_home: PathBuf,
 
     /// Cargo make task. E.g. the word "build" if we want to execute `cargo make build`.
     makefile_task: String,
 
-    /// Arguments to be passed to cargo make
+    /// Uninspected arguments to be passed to cargo make after the target name. For example, --foo
+    /// in the following command : cargo make test --foo.
     additional_args: Vec<String>,
 }
 
@@ -46,11 +46,9 @@ impl Exec {
 
         for (key, val) in std::env::vars() {
             if is_build_system_env(key.as_str()) {
-                debug!("Passing env var {} to cargo make", key);
+                trace!("Passing env var {} to cargo make", key);
                 args.push("-e".to_string());
                 args.push(format!("{}={}", key, val));
-            } else {
-                trace!("Not passing env var {} to cargo make", key);
             }
         }
 
@@ -58,17 +56,15 @@ impl Exec {
         args.push(format!("CARGO_HOME={}", self.cargo_home.display()));
         args.push(self.makefile_task.clone());
 
-        // These have to go last because the last of these might be the Makefile.toml target.
         for cargo_make_arg in &self.additional_args {
             args.push(cargo_make_arg.clone());
         }
 
-        exec(Command::new("cargo").args(args)).await?;
-        Ok(())
+        exec(Command::new("cargo").args(args)).await
     }
 }
 
-/// A list of environment variables that don't conform to naming conventions, but we need to pass
+/// A list of environment variables that don't conform to naming conventions but need to be passed
 /// through to the `cargo make` invocation.
 const ENV_VARS: [&str; 13] = [
     "ALLOW_MISSING_KEY",
@@ -86,21 +82,15 @@ const ENV_VARS: [&str; 13] = [
     "VMWARE_VM_NAME_DEFAULT",
 ];
 
+/// Returns `true` if `key` is an environment variable that needs to be passed to `cargo make`.
 fn is_build_system_env(key: impl AsRef<str>) -> bool {
     let key = key.as_ref();
-    if key.starts_with("BOOT_CONFIG") {
-        true
-    } else if key.starts_with("BUILDSYS_") {
-        true
-    } else if key.starts_with("PUBLISH_") {
-        true
-    } else if key.starts_with("REPO_") {
-        true
-    } else if key.starts_with("TESTSYS_") {
-        true
-    } else {
-        ENV_VARS.contains(&key)
-    }
+    key.starts_with("BUILDSYS_") || 
+    key.starts_with("PUBLISH_") || 
+    key.starts_with("REPO_") ||
+    key.starts_with("TESTSYS_") || 
+    key.starts_with("BOOT_CONFIG") ||
+    ENV_VARS.contains(&key)
 }
 
 #[test]

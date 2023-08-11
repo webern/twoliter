@@ -17,10 +17,10 @@ impl InstallCommand {
     }
 }
 
-/// Build a Bottlerocket variant image.
+/// Install items that Twoliter needs on the build host.
 #[derive(Debug, Parser)]
 pub(crate) struct InstallTools {
-    /// Path to Twoliter.toml. Will search for Twoliter.toml when absent.
+    /// Path to the project file. Will search for Twoliter.toml when absent.
     #[clap(long)]
     project_path: Option<PathBuf>,
 
