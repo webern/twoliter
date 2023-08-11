@@ -3,7 +3,7 @@ use crate::project;
 use crate::tools::install_tools;
 use anyhow::Result;
 use clap::Parser;
-use log::{ trace};
+use log::trace;
 use std::path::PathBuf;
 use tokio::process::Command;
 
@@ -85,12 +85,12 @@ const ENV_VARS: [&str; 13] = [
 /// Returns `true` if `key` is an environment variable that needs to be passed to `cargo make`.
 fn is_build_system_env(key: impl AsRef<str>) -> bool {
     let key = key.as_ref();
-    key.starts_with("BUILDSYS_") || 
-    key.starts_with("PUBLISH_") || 
-    key.starts_with("REPO_") ||
-    key.starts_with("TESTSYS_") || 
-    key.starts_with("BOOT_CONFIG") ||
-    ENV_VARS.contains(&key)
+    key.starts_with("BUILDSYS_")
+        || key.starts_with("PUBLISH_")
+        || key.starts_with("REPO_")
+        || key.starts_with("TESTSYS_")
+        || key.starts_with("BOOT_CONFIG")
+        || ENV_VARS.contains(&key)
 }
 
 #[test]

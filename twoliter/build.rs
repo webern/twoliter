@@ -37,10 +37,10 @@ fn main() {
     let enc = GzEncoder::new(&mut buf_writer, Compression::default());
     let mut tar = tar::Builder::new(enc);
     tar.append_dir_all("", &tools_dir).unwrap();
-    
+
     // Drop tar object to ensure any finalizing steps are done.
     drop(tar);
-    
+
     // Get a reference to the tarball bytes.
     let tar_data = buf_writer.get_ref();
 
@@ -49,7 +49,7 @@ fn main() {
     hasher.update(tar_data);
     let hashed = hasher.finalize();
     let hash = format!("{:02X}", hashed).to_ascii_lowercase();
-    
+
     // Write the tarball to the OUT_DIR where it can be imported during the build.
     fs::write(&tar_path, tar_data)
         .expect(&format!("Unable to write to file '{}'", tar_path.display()));

@@ -67,4 +67,3 @@ pub(crate) mod fs {
             .context(format!("Unable to read file '{}'", path.as_ref().display()))
     }
 }
-

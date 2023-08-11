@@ -1,8 +1,6 @@
 use crate::common::exec;
 use crate::docker::ImageUri;
 use anyhow::Result;
-use serde::Serialize;
-use serde_plain::derive_display_from_serialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tokio::process::Command;

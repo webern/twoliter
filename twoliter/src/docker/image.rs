@@ -37,7 +37,7 @@ impl ImageUri {
 #[test]
 fn image_uri_no_registry() {
     let uri = ImageUri::new(None, "foo", "v1.2.3");
-    let formatted = uri._uri();
+    let formatted = uri.uri();
     let expected = "foo:v1.2.3";
     assert_eq!(expected, formatted);
 }
@@ -45,7 +45,7 @@ fn image_uri_no_registry() {
 #[test]
 fn image_uri_with_registry() {
     let uri = ImageUri::new(Some("example.com/a/b/c".to_string()), "foo", "v1.2.3");
-    let formatted = uri._uri();
+    let formatted = uri.uri();
     let expected = "example.com/a/b/c/foo:v1.2.3";
     assert_eq!(expected, formatted);
 }
@@ -69,7 +69,7 @@ pub(crate) struct ImageArchUri {
 
 impl ImageArchUri {
     /// Create a new `ImageArchUri`.
-    pub(crate) fn _new<S1, S2, S3>(registry: Option<String>, name: S1, arch: S2, tag: S3) -> Self
+    pub(crate) fn new<S1, S2, S3>(registry: Option<String>, name: S1, arch: S2, tag: S3) -> Self
     where
         S1: Into<String>,
         S2: Into<String>,
@@ -95,7 +95,7 @@ impl ImageArchUri {
 
 #[test]
 fn image_arch_uri_no_registry() {
-    let uri = ImageArchUri::_new(None, "my-sdk", "i386", "v0.33.1");
+    let uri = ImageArchUri::new(None, "my-sdk", "i386", "v0.33.1");
     let formatted = uri.uri();
     let expected = "my-sdk-i386:v0.33.1";
     assert_eq!(expected, formatted);
@@ -103,7 +103,7 @@ fn image_arch_uri_no_registry() {
 
 #[test]
 fn image_arch_uri_with_registry() {
-    let uri = ImageArchUri::_new(
+    let uri = ImageArchUri::new(
         Some("example.com/a/b/c".to_string()),
         "my-sdk",
         "i386",
