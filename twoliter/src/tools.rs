@@ -16,7 +16,7 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> R
         return Ok(());
     }
 
-    trace!("Installing tools to '{}'", tools_dir.display());
+    debug!("Installing tools to '{}'", tools_dir.display());
 
     fs::create_dir_all(&tools_dir)
         .await
