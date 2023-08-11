@@ -41,6 +41,7 @@ fn main() {
     // Drop tar object to ensure any finalizing steps are done.
     drop(tar);
     
+    // Get a reference to the tarball bytes.
     let tar_data = buf_writer.get_ref();
 
     // Create a hash of the in-memory tarball to be used when installing tools.
