@@ -7,9 +7,8 @@ use log::{debug, trace};
 use std::path::PathBuf;
 use tokio::process::Command;
 
-/// Run a cargo make command in Twoliter's build environment. Certain environment variable paths
-/// from Makefile.toml are taken here as explicit arguments so that the caller can decide which of
-/// these configurable paths may need to be mounted by Twoliter.
+/// Run a cargo make command in Twoliter's build environment. Known Makefile.toml environment
+/// variables will be passed-through to the cargo make invocation.
 #[derive(Debug, Parser)]
 pub(crate) struct Exec {
     /// Path to the project file. Will search for Twoliter.toml when absent.
