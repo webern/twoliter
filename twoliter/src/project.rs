@@ -130,7 +130,7 @@ impl Default for Sdk {
 
 impl Sdk {
     pub(crate) fn uri<S: Into<String>>(&self, arch: S) -> ImageArchUri {
-        ImageArchUri::_new(self.registry.clone(), &self.name, arch, &self.version)
+        ImageArchUri::new(self.registry.clone(), &self.name, arch, &self.version)
     }
 }
 
