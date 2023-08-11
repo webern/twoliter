@@ -61,19 +61,6 @@ pub(crate) mod fs {
             ))
     }
 
-    pub async fn _remove_file(path: impl AsRef<Path>) -> Result<()> {
-        tokio::fs::remove_file(path.as_ref()).await.context(format!(
-            "Unable to remove file '{}'",
-            path.as_ref().display()
-        ))
-    }
-
-    pub async fn _open_file(path: impl AsRef<Path>) -> Result<tokio::fs::File> {
-        tokio::fs::File::open(path.as_ref())
-            .await
-            .context(format!("Unable to open file '{}", path.as_ref().display()))
-    }
-
     pub async fn read_to_string(path: impl AsRef<Path>) -> Result<String> {
         tokio::fs::read_to_string(&path)
             .await
