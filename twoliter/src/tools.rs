@@ -38,6 +38,9 @@ pub(crate) async fn install_tools(tools_dir: impl AsRef<Path>, force: bool) -> R
     Ok(())
 }
 
+/// Returns `false` if the tools hash file is found and contains the same hash as `TOOLS_HASH`.
+/// Otherwise returns `true` because the tools have not been installed or may not be the correct
+/// version. 
 async fn should_install(sentinel_filepath: &Path) -> bool {
     if !sentinel_filepath.is_file() {
         trace!(
