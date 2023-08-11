@@ -99,6 +99,9 @@ fn test_is_build_system_env() {
         "CARGO_MAKE_DEFAULT_TESTSYS_KUBECONFIG_PATH"
     ));
     assert!(is_build_system_env("BUILDSYS_PRETTY_NAME"));
+    assert!(is_build_system_env("PUBLISH_FOO_BAR"));
+    assert!(is_build_system_env("TESTSYS_!"));
     assert!(!is_build_system_env("PATH"));
     assert!(!is_build_system_env("HOME"));
+    assert!(!is_build_system_env("COLORTERM"));
 }
