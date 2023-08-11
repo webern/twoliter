@@ -78,7 +78,7 @@ impl DockerBuild {
         }
         if let Some(tag) = self.tag.as_ref() {
             args.push("--tag".to_string());
-            args.push(tag._uri());
+            args.push(tag.uri());
         }
         args.extend(
             self.build_args
