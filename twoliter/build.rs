@@ -36,7 +36,7 @@ fn main() {
     let makefile_source = data_input_dir.join("Makefile.temp.toml");
     copy_file(makefile_source, tools_dir.join("Makefile.toml"));
 
-    // Create tarball
+    // Create tarball in memory.
     let mut buf_writer = Vec::new().writer();
     let enc = GzEncoder::new(&mut buf_writer, Compression::default());
     let mut tar = tar::Builder::new(enc);
