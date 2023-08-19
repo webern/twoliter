@@ -3792,6 +3792,7 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "async-recursion",
+ "buildsys",
  "bytes",
  "clap 4.3.5",
  "env_logger",
