@@ -22,6 +22,7 @@ tokio = { version = "1", default-features = false, features = ["fs", "macros", "
 toml = "0.7"
 
 [build-dependencies]
+buildsys = { version = "0.1.0", artifact = [ "bin:buildsys", "bin:bottlerocket-variant" ], path = "../tools/buildsys" }
 bytes = "1"
 flate2 = "1"
 tar = "0.4"
