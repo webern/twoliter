@@ -25,4 +25,8 @@ toml = "0.7"
 buildsys = { version = "0.1.0", artifact = [ "bin:buildsys", "bin:bottlerocket-variant" ], path = "../tools/buildsys" }
 bytes = "1"
 flate2 = "1"
+# TODO - is the artifact name required here?
+pubsys = { version = "0.1.0", artifact = [ "bin:pubsys" ], path = "../tools/pubsys" }
+pubsys-setup = { version = "0.1.0", artifact = [ "bin:pubsys-setup" ], path = "../tools/pubsys-setup" }
 tar = "0.4"
+testsys = { version = "0.1.0", artifact = [ "bin:testsys" ], path = "../tools/testsys" }

@@ -38,4 +38,8 @@ async fn test_install_tools() {
 
     // Assert that the expected files exist in the tools directory.
     assert!(tempdir.path().join("Makefile.toml").is_file());
+    assert!(tempdir.path().join("buildsys").is_file());
+    assert!(tempdir.path().join("pubsys").is_file());
+    assert!(tempdir.path().join("pubsys-setup").is_file());
+    assert!(tempdir.path().join("testsys").is_file());
 }
