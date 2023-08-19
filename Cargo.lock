@@ -3792,14 +3792,18 @@ version = "0.0.0"
 dependencies = [
  "anyhow",
  "async-recursion",
+ "buildsys",
  "bytes",
  "clap 4.3.5",
  "env_logger",
  "flate2",
  "log",
+ "pubsys",
+ "pubsys-setup",
  "serde",
  "tar",
  "tempfile",
+ "testsys",
  "tokio",
  "toml 0.7.6",
 ]

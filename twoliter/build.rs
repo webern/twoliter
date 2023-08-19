@@ -19,6 +19,7 @@ fn main() {
     println!("cargo:rerun-if-changed={}", DATA_INPUT_DIR);
     // Make sure we run again if the target triple (i.e. aarch64-unknown-linux-gnu) changes.
     println!("cargo:rerun-if-env-changed=TARGET");
+    println!("cargo:rerun-if-changed={}", "../tools");
     let data_input_dir = PathBuf::from(DATA_INPUT_DIR);
 
     // This is the directory that cargo creates for us so that we can pass things from the build
@@ -41,6 +42,10 @@ fn main() {
         data_input_dir.join("Makefile.toml"),
         tools_dir.join("Makefile.toml"),
     );
+    copy_bin("buildsys", &tools_dir);
+    copy_bin("pubsys", &tools_dir);
+    copy_bin("pubsys-setup", &tools_dir);
+    copy_bin("testsys", &tools_dir);
 
     // Create tarball in memory.
     let mut buf_writer = Vec::new().writer();
@@ -72,4 +77,27 @@ where
         source.display(),
         dest.display()
     ));
+}
+
+fn env_name(bin: &str) -> String {
+    let bin_upper = bin.to_ascii_uppercase().replace('-', "_");
+    format!("CARGO_BIN_FILE_{bin_upper}_{bin}")
+}
+
+fn artifact_path(bin: &str) -> PathBuf {
+    let var_key = env_name(bin);
+    let var_val = env::var(&var_key).expect(&format!(
+        "Unable to retrieve environment variable '{}'",
+        var_key
+    ));
+    PathBuf::from(&var_val).canonicalize().expect(&format!(
+        "Unable to canonicalize the path for binary '{}': {}",
+        bin, var_val
+    ))
+}
+
+fn copy_bin(bin: &str, dir: impl AsRef<Path>) {
+    let source = artifact_path(bin);
+    let dest = dir.as_ref().join(bin);
+    copy_file(source, dest)
 }
