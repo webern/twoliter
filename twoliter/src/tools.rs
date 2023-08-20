@@ -9,7 +9,7 @@ const TAR_GZ_DATA: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/tools.tar.g
 
 pub(crate) async fn install_tools() -> Result<TempDir> {
     let tempdir = TempDir::new().context("Unable to create a tempdir for Twoliter's tools")?;
-    let tools_dir = std::path::PathBuf::from("/tmp/the-tools"); //tempdir.path();
+    let tools_dir = tempdir.path();
     debug!("Installing tools to '{}'", tools_dir.display());
 
     // Write out the embedded tools and scripts.
