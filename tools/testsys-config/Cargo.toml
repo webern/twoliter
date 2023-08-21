@@ -5,6 +5,7 @@ authors = ["Ethan Pullen <pullenep@amazon.com>"]
 license = "Apache-2.0 OR MIT"
 edition = "2021"
 publish = false
+repository = "https://github.com/bottlerocket-os/twoliter"
 
 [dependencies]
 bottlerocket-types = { git = "https://github.com/bottlerocket-os/bottlerocket-test-system", version = "0.0.8", tag = "v0.0.8"}
