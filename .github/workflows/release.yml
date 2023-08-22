@@ -59,7 +59,7 @@ jobs:
       - name: Install cargo-dist
         run: |
           cargo install \
-            --git "https://github.com/bottlerocket-os/cargo-dist" \
+            --git "https://github.com/webern/cargo-dist" \
             --rev "5179ffc8fa3600daa1f49598de7c16b7af4f03a4"
       - id: create-release
         run: |
