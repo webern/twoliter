@@ -1,5 +1,2 @@
 [unstable]
 bindeps = true
-
-[env]
-RUSTC_BOOTSTRAP = "1"
