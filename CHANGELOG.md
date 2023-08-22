@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [origin-v0.0.3-deleteme6] - 2023-08-21
+
+### Added
+
+- The binary tools.
+- Distribution with `cargo dist`
+
+### Changed
+
+- Fix something in Makefile.toml
+
 ## [0.0.2] - 2023-08-18
 
 ### Changed
@@ -21,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Bottlerocket's `cargo make` build system.
 - `Makefile.toml` taken from the Bottlerocket project.
 
-[unreleased]: https://github.com/webern/twoliter/compare/v0.0.2...HEAD
+[unreleased]: https://github.com/webern/twoliter/compare/origin-v0.0.3-deleteme6...HEAD
+[origin-v0.0.3-deleteme6]: https://github.com/webern/twoliter/compare/v0.0.2...origin-v0.0.3-deleteme6
 [0.0.2]: https://github.com/webern/twoliter/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/webern/twoliter/releases/tag/v0.0.1
