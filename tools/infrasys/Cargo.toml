@@ -5,7 +5,7 @@ license = "Apache-2.0 OR MIT"
 authors = ["Aashna Sheth <shetaash@amazon.com>"]
 edition = "2021"
 publish = false
-repository = "https://github.com/bottlerocket-os/twoliter"
+repository = "https://github.com/webern/twoliter"
 
 [dependencies]
 async-trait = "0.1"
