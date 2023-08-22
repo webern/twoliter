@@ -105,6 +105,8 @@ jobs:
       - name: Install cargo-dist
         run: ${{ matrix.install-dist }}
       - name: Run cargo-dist
+        env:
+          RUSTC_BOOTSTRAP: "1"
         # This logic is a bit janky because it's trying to be a polyglot between
         # powershell and bash since this will run on windows, macos, and linux!
         # The two platforms don't agree on how to talk about env vars but they
