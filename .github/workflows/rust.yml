@@ -16,6 +16,8 @@ on:
       - "**.svg"
 jobs:
   build:
+    env:
+      RUSTC_BOOTSTRAP: "1"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
