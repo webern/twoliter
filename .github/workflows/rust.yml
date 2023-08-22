@@ -1,12 +1,12 @@
 name: Rust
 on:
   # triggers when a PR is posted
-  pull_request:
-    branches: [develop]
-    paths-ignore:
-      - "**.md"
-      - "**.plantuml"
-      - "**.svg"
+#  pull_request:
+#    branches: [develop]
+#    paths-ignore:
+#      - "**.md"
+#      - "**.plantuml"
+#      - "**.svg"
   # triggers when a PR is merged
   push:
     branches: [develop]
