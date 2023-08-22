@@ -57,9 +57,13 @@ jobs:
         with:
           submodules: recursive
       - name: Install cargo-dist
-        run: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.1.0/cargo-dist-installer.sh | sh"
+        run: |
+          cargo install \
+            --git "https://github.com/bottlerocket-os/cargo-dist" \
+            --rev "5179ffc8fa3600daa1f49598de7c16b7af4f03a4"
       - id: create-release
         run: |
+          export PATH=$CARGO_HOME/bin:$PATH
           cargo dist plan --tag=${{ github.ref_name }} --output-format=json > dist-manifest.json
           echo "dist plan ran successfully"
           cat dist-manifest.json
@@ -114,22 +118,7 @@ jobs:
         # We also have to do acrobatics to support cross-compilation to arm.
         # Adapted from https://www.modio.se/cross-compiling-rust-binaries-to-armv7.html
         run: |
-          #          cat > $CARGO_HOME/config << EOF
-          #          [target.armv7-unknown-linux-gnueabihf]
-          #          linker = "arm-linux-gnueabihf-gcc"
-          #          EOF
-
-          # TODO - change all of this to aarch64 stuff
-          sudo dpkg --add-architecture armhf
-          sudo apt-get update
-          sudo apt-get install -y curl git build-essential
-          sudo apt-get install -y libc6-armhf-cross libc6-dev-armhf-cross gcc-arm-linux-gnueabihf
-          sudo apt-get install -y libdbus-1-dev libdbus-1-dev:armhf
-          rustup target add armv7-unknown-linux-gnueabihf
-          
-          export PKG_CONFIG_PATH="/usr/lib/arm-linux-gnueabihf/pkgconfig"
-          export PKG_CONFIG_ALLOW_CROSS="true"
-          
+          export PATH=$CARGO_HOME/bin:$PATH
           # Actually do builds and make zips and whatnot
           cargo dist build --tag=${{ github.ref_name }} --output-format=json ${{ matrix.dist-args }} > dist-manifest.json
           echo "dist ran successfully"
