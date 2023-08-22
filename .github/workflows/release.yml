@@ -114,10 +114,10 @@ jobs:
         # We also have to do acrobatics to support cross-compilation to arm.
         # Adapted from https://www.modio.se/cross-compiling-rust-binaries-to-armv7.html
         run: |
-          cat > $CARGO_HOME/config << EOF
-          [target.armv7-unknown-linux-gnueabihf]
-          linker = "arm-linux-gnueabihf-gcc"
-          EOF
+#          cat > $CARGO_HOME/config << EOF
+#          [target.armv7-unknown-linux-gnueabihf]
+#          linker = "arm-linux-gnueabihf-gcc"
+#          EOF
 
           # TODO - change all of this to aarch64 stuff
           dpkg --add-architecture armhf
