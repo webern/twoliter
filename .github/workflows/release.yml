@@ -64,7 +64,7 @@ jobs:
       - id: create-release
         run: |
           export PATH=$CARGO_HOME/bin:$PATH
-          cargo dist plan --tag=${{ github.ref_name }} --output-format=json > dist-manifest.json
+          cargo dist --verbose=debug plan --tag=${{ github.ref_name }} --output-format=json > dist-manifest.json
           echo "dist plan ran successfully"
           cat dist-manifest.json
 
@@ -97,7 +97,7 @@ jobs:
           dist-args: "--artifacts=local --target=x86_64-unknown-linux-gnu"
           install-dist: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.1.0/cargo-dist-installer.sh | sh"
         - os: "ubuntu-20.04"
-          dist-args: "--artifacts=local --target=armv7-unknown-linux-gnueabihf"
+          dist-args: "--artifacts=local --target=aarch64-unknown-linux-musl"
           install-dist: "curl --proto '=https' --tlsv1.2 -LsSf https://github.com/axodotdev/cargo-dist/releases/download/v0.1.0/cargo-dist-installer.sh | sh"
     runs-on: ${{ matrix.os }}
     env:
@@ -120,7 +120,7 @@ jobs:
         run: |
           export PATH=$CARGO_HOME/bin:$PATH
           # Actually do builds and make zips and whatnot
-          cargo dist build --tag=${{ github.ref_name }} --output-format=json ${{ matrix.dist-args }} > dist-manifest.json
+          cargo dist --verbose=debug build --tag=${{ github.ref_name }} --output-format=json ${{ matrix.dist-args }} > dist-manifest.json
           echo "dist ran successfully"
           cat dist-manifest.json
           
