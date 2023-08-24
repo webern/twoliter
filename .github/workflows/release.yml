@@ -60,7 +60,7 @@ jobs:
         run: |
           cargo install \
             --git "https://github.com/webern/cargo-dist" \
-            --rev "169a316fd6f4cb41168c0bf0777021b280433d8e"
+            --rev "55a4969f115e3880c244e8fcbcb3c17eb48ccd3e"
       - name: Default Rust to Nightly
         run: |
           rustup default nightly
@@ -101,13 +101,13 @@ jobs:
           install-dist: |
             cargo install \
               --git "https://github.com/webern/cargo-dist" \
-              --rev "169a316fd6f4cb41168c0bf0777021b280433d8e"
+              --rev "55a4969f115e3880c244e8fcbcb3c17eb48ccd3e"
         - os: "ubuntu-20.04"
           dist-args: "--artifacts=local --target=aarch64-unknown-linux-musl"
           install-dist:  |
             cargo install \
               --git "https://github.com/webern/cargo-dist" \
-              --rev "169a316fd6f4cb41168c0bf0777021b280433d8e"
+              --rev "55a4969f115e3880c244e8fcbcb3c17eb48ccd3e"
     runs-on: ${{ matrix.os }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
