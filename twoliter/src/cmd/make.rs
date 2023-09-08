@@ -52,8 +52,12 @@ impl Make {
             }
         }
 
-        args.push("-e".to_string());
-        args.push(format!("CARGO_HOME={}", self.cargo_home.display()));
+        args.push(format!("-e=CARGO_HOME={}", self.cargo_home.display()));
+        args.push(format!(
+            "-e=TWOLITER_TOOLS_DIR={}",
+            tempdir.path().display()
+        ));
+
         args.push(self.makefile_task.clone());
 
         for cargo_make_arg in &self.additional_args {

@@ -37,5 +37,21 @@ async fn test_install_tools() {
     let tempdir = install_tools().await.unwrap();
 
     // Assert that the expected files exist in the tools directory.
+
+    // Check that non-binary files were copied.
+    assert!(tempdir.path().join("Dockerfile").is_file());
     assert!(tempdir.path().join("Makefile.toml").is_file());
+    assert!(tempdir.path().join("docker-go").is_file());
+    assert!(tempdir.path().join("partyplanner").is_file());
+    assert!(tempdir.path().join("rpm2img").is_file());
+    assert!(tempdir.path().join("rpm2kmodkit").is_file());
+    assert!(tempdir.path().join("rpm2migrations").is_file());
+
+    // Check that binaries were copied.
+    assert!(tempdir.path().join("bottlerocket-variant").is_file());
+    assert!(tempdir.path().join("buildsys").is_file());
+    assert!(tempdir.path().join("pubsys").is_file());
+    assert!(tempdir.path().join("pubsys-setup").is_file());
+    assert!(tempdir.path().join("testsys").is_file());
+    assert!(tempdir.path().join("tuftool").is_file());
 }
