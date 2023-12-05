@@ -1,0 +1,9 @@
+[package]
+name = "filesystem"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[lib]
+path = "../packages.rs"

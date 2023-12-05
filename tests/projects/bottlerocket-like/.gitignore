@@ -1,0 +1,14 @@
+/build/
+**/target/
+/.cargo/
+/.gomodcache/
+/keys/
+/roles/
+/sbkeys/**/**
+!/sbkeys/generate-local-sbkeys
+!/sbkeys/generate-aws-sbkeys
+!/sbkeys/README.md
+Test.toml
+testsys.kubeconfig
+Infra.toml
+*.tar.*

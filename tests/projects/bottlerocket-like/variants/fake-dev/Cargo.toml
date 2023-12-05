@@ -1,0 +1,47 @@
+[package]
+name = "fake-dev"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+# Don't rebuild crate just because of changes to README.
+exclude = ["README.md"]
+
+[package.metadata.build-variant.image-features]
+grub-set-private-var = true
+unified-cgroup-hierarchy = true
+uefi-secure-boot = true
+xfs-data-partition = true
+systemd-networkd = true
+
+[package.metadata.build-variant]
+included-packages = [
+    "hello-agent",
+    "hello-go",
+    # rpm2img expects certain directories to exist
+    "filesystem",
+    # TODO - remove when rpm2migrations is gone
+    "migrations",
+    # TODO - remove if rpm2kmodkits can be otherwise mollified
+    "kernel-99.0",
+]
+kernel-parameters = [
+    "console=tty0",
+    "console=ttyS0,115200n8",
+    "net.ifnames=0",
+    "netdog.default-interface=eth0:dhcp4,dhcp6?",
+    "quiet",
+]
+
+[lib]
+path = "../variants.rs"
+
+[build-dependencies]
+hello-agent = { path = "../../packages/hello-agent" }
+hello-go = { path = "../../packages/hello-go" }
+# rpm2img expects certain directories to exist
+filesystem = { path = "../../packages/filesystem" }
+# TODO - remove when rpm2migrations is gone
+migrations = { path = "../../packages/migrations"}
+# TODO - remove if rpm2kmodkits can be otherwise mollified
+kernel-99_0 = { path = "../../packages/kernel-99.0"}

@@ -1,0 +1,21 @@
+[package]
+name = "kernel-99_0"
+version = "0.1.0"
+edition = "2021"
+publish = false
+build = "../build.rs"
+
+[package.metadata.build-package]
+variant-sensitive = "platform"
+package-name = "kernel-99.0"
+
+[lib]
+path = "../packages.rs"
+
+# RPM BuildRequires
+[build-dependencies]
+# None
+
+# RPM Requires
+[dependencies]
+# None
