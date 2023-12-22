@@ -124,3 +124,47 @@ async fn test_install_tools() {
 
     assert_eq!(dockerfile_mtime, buildsys_mtime);
 }
+
+#[tokio::test]
+async fn test_embedded_file_hashes() {
+    use sha2::{Digest, Sha256};
+
+    let tempdir = tools_tempdir().unwrap();
+    install_tools(&tempdir).await.unwrap();
+    let embedded_files_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("embedded");
+    let mut embedded_paths = fs::read_dir(&embedded_files_dir)
+        .await
+        .expect(&format!("Unable to read {}", embedded_files_dir.display()));
+    while let Some(entry) = embedded_paths.next_entry().await.unwrap() {
+        if !entry.path().is_file() {
+            continue;
+        }
+        let filename = entry
+            .path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
+        let mut embedded_hasher = Sha256::new();
+        let mut embedded_bytes = std::io::Cursor::new(fs::read(entry.path()).await.unwrap());
+        std::io::copy(&mut embedded_bytes, &mut embedded_hasher).unwrap();
+        let embedded_hash = embedded_hasher.finalize();
+
+        let tool_filepath = tempdir.path().join(&filename);
+        let mut tool_hasher = Sha256::new();
+        let mut tool_bytes = std::io::Cursor::new(
+            fs::read(&tool_filepath)
+                .await
+                .expect(&format!("Unable to read '{}'", tool_filepath.display())),
+        );
+        std::io::copy(&mut tool_bytes, &mut tool_hasher).unwrap();
+        let tool_hash = tool_hasher.finalize();
+
+        assert_eq!(
+            embedded_hash, tool_hash,
+            "The installed tools file '{}' does not match the one in the embedded directory",
+            filename
+        )
+    }
+}
