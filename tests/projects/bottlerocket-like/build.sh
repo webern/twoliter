@@ -21,6 +21,7 @@ cargo run \
    --package twoliter \
    --manifest-path "${script_dir}/../../../Cargo.toml" \
    -- \
+      --log-level trace \
       make build-variant \
         --cargo-home "${script_dir}/.cargo" \
       2>&1 | tee "${logs_dir}/bottlerocket-like-test.log"
