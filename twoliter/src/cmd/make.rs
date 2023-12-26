@@ -12,27 +12,27 @@ use std::path::PathBuf;
 pub(crate) struct Make {
     /// Path to the project file. Will search for Twoliter.toml when absent.
     #[clap(long)]
-    project_path: Option<PathBuf>,
+    pub(crate) project_path: Option<PathBuf>,
 
     /// Twoliter does not read this from the CARGO_HOME environment variable to avoid any possible
     /// confusion between a CARGO_HOME set on the system, and the path intended for the Bottlerocket
     /// build.
     #[clap(long)]
-    cargo_home: PathBuf,
+    pub(crate) cargo_home: PathBuf,
 
     /// Cargo make task. E.g. the word "build" if we want to execute `cargo make build`.
-    makefile_task: String,
+    pub(crate) makefile_task: String,
 
     /// Uninspected arguments to be passed to cargo make after the target name. For example, --foo
     /// in the following command : cargo make test --foo.
-    additional_args: Vec<String>,
+    pub(crate) additional_args: Vec<String>,
 
     #[clap(env = "BUILDSYS_ARCH")]
-    arch: String,
+    pub(crate) arch: String,
 }
 
 impl Make {
-    pub(super) async fn run(&self) -> Result<()> {
+    pub(crate) async fn run(&self) -> Result<()> {
         let project = project::load_or_find_project(self.project_path.clone()).await?;
         let toolsdir = project.project_dir().join("build/tools");
         let _ = fs::remove_dir_all(&toolsdir).await;

@@ -1,6 +1,6 @@
 mod build;
 mod debug;
-mod make;
+pub(crate) mod make;
 
 use self::build::BuildCommand;
 use crate::cmd::debug::DebugAction;
