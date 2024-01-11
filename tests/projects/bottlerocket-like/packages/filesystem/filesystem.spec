@@ -36,6 +36,14 @@ mkdir -p %{buildroot}/root/.aws
 # added because rpm2img expects these to exist
 mkdir -p %{buildroot}%{_cross_datadir}/%{_cross_vendor}
 mkdir -p %{buildroot}%{_cross_licensedir}
+mkdir -p %{buildroot}/boot/grub
+touch %{buildroot}%{_cross_sbindir}/grub-bios-setup
+chmod +x %{buildroot}%{_cross_sbindir}/grub-bios-setup
+mkdir -p %{buildroot}/boot/efi/EFI/BOOT
+touch %{buildroot}/boot/efi/EFI/BOOT/delete-me
+touch %{buildroot}/boot/efi/EFI/BOOT/boot.efi
+touch %{buildroot}/boot/efi/EFI/BOOT/grub.efi
+touch %{buildroot}/boot/efi/EFI/BOOT/mm.efi
 
 ln -s .%{_cross_prefix} %{buildroot}%{_prefix}
 ln -s .%{_cross_libdir} %{buildroot}/lib
