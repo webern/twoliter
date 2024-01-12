@@ -142,6 +142,48 @@ impl PackageBuilder {
     }
 }
 
+pub(crate) struct KitBuilder;
+
+impl KitBuilder {
+    /// Build a kit of RPMs.
+    pub(crate) fn build(packages: &[String]) -> Result<Self> {
+        let output_dir: PathBuf = getenv("BUILDSYS_OUTPUT_DIR")?.into();
+
+        let variant = getenv("BUILDSYS_VARIANT")?;
+        let arch = getenv("BUILDSYS_ARCH")?;
+
+        let mut args = Vec::new();
+        args.build_arg("PACKAGES", packages.join(" "));
+        args.build_arg("ARCH", &arch);
+        args.build_arg("VERSION_ID", getenv("BUILDSYS_VERSION_IMAGE")?);
+        args.build_arg("BUILD_ID", getenv("BUILDSYS_VERSION_BUILD")?);
+        args.build_arg("PRETTY_NAME", getenv("BUILDSYS_PRETTY_NAME")?);
+        let kit_name = getenv("BUILDSYS_CREATE_KIT")?;
+        args.build_arg("KIT_NAME", &kit_name);
+        args.build_arg("CORE_KIT_NAME", getenv("BUILDSYS_CORE_KIT_NAME")?);
+
+        // Always rebuild variants since they are located in a different workspace,
+        // and don't directly track changes in the underlying packages.
+        getenv("BUILDSYS_TIMESTAMP")?;
+
+        // TODO - come up with a proper tagging schema
+        let tag = kit_name;
+
+        build(
+            BuildType::Kit,
+            &variant,
+            &arch,
+            args,
+            &tag,
+            &output_dir,
+            PathBuf::from(getenv("BUILDSYS_DOCKERFILES")?).join("Kit.dockerfile"),
+            &getenv("BUILDSYS_ROOT_DIR")?,
+        )?;
+
+        Ok(Self)
+    }
+}
+
 pub(crate) struct VariantBuilder;
 
 impl VariantBuilder {
@@ -243,6 +285,74 @@ impl VariantBuilder {
 enum BuildType {
     Package,
     Variant,
+}
+
+struct Build {
+    root: PathBuf,
+    kind: BuildType,
+    name: String,
+    arch: String,
+    token: String,
+    tag_name: String,
+    output_dir: PathBuf,
+    build_args: Vec<String>,
+}
+
+impl Build {
+    fn new(name: &str, tag_name: &str) -> Result<Self> {
+        let root = getenv("BUILDSYS_ROOT_DIR")?;
+
+        // Compute a per-checkout prefix for the tag to avoid collisions.
+        let mut d = Sha512::new();
+        d.update(&root);
+        let digest = hex::encode(d.finalize());
+        let token = &digest[..12];
+
+        // Our SDK and toolchain are picked by the external `cargo make` invocation.
+        let sdk = getenv(SDK_VAR)?;
+        let toolchain = getenv(TOOLCHAIN_VAR)?;
+
+        // Avoid using a cached layer from a previous build.
+        let nocache = rand::thread_rng().gen::<u32>();
+
+        // Create a directory for tracking outputs before we move them into position.
+        let build_dir = create_build_dir(&kind, what, arch)?;
+
+        // Clean up any previous outputs we have tracked.
+        clean_build_files(&build_dir, output_dir)?;
+
+        let target = match kind {
+            BuildType::Package => "package",
+            BuildType::Variant => "variant",
+        };
+
+        // Our dockerfile is in the Twoliter tools directory.
+        let twoliter_tools_dir =
+            env::var(TOOLS_DIR).context(error::EnvironmentSnafu { var: TOOLS_DIR })?;
+        let dockerfile = PathBuf::from(twoliter_tools_dir).join("Dockerfile");
+
+        let mut build = format!(
+            "build . \
+        --target {target} \
+        --tag {tag} \
+        --file {dockerfile}",
+            dockerfile = dockerfile.display(),
+            target = target,
+            tag = tag,
+        )
+        .split_string();
+
+        build.extend(build_args);
+        build.build_arg("SDK", sdk);
+        build.build_arg("TOOLCHAIN", toolchain);
+        build.build_arg("NOCACHE", nocache.to_string());
+        // Avoid using a cached layer from a concurrent build in another checkout.
+        build.build_arg("TOKEN", token);
+    }
+
+    fn tag(&self) -> String {
+        format!("{}-{}", self.tag_name, self.token)
+    }
 }
 
 /// Invoke a series of `docker` commands to drive a package or variant build.

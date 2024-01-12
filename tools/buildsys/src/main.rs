@@ -15,6 +15,7 @@ mod gomod;
 mod project;
 mod spec;
 
+use crate::builder::KitBuilder;
 use builder::{PackageBuilder, VariantBuilder};
 use buildsys::manifest::{BundleModule, ManifestInfo, SupportedArch};
 use cache::LookasideCache;
@@ -87,6 +88,7 @@ type Result<T> = std::result::Result<T, error::Error>;
 #[serde(rename_all = "kebab-case")]
 enum Command {
     BuildPackage,
+    BuildKit,
     BuildVariant,
 }
 
@@ -97,7 +99,8 @@ USAGE:
     buildsys <SUBCOMMAND>
 
 SUBCOMMANDS:
-    build-package           Build RPMs from a spec file and sources.
+    build-package           Build RPMs from a single spec file and sources.
+    build-kit               Create a kit, a container image of RPMs.
     build-variant           Build filesystem and disk images from RPMs."
     );
     process::exit(1)
@@ -120,6 +123,7 @@ fn run() -> Result<()> {
     let command = serde_plain::from_str::<Command>(&command_str).unwrap_or_else(|_| usage());
     match command {
         Command::BuildPackage => build_package()?,
+        Command::BuildKit => build_kit()?,
         Command::BuildVariant => build_variant()?,
     }
     Ok(())
@@ -236,6 +240,27 @@ fn build_package() -> Result<()> {
     }
 
     PackageBuilder::build(&package, image_features).context(error::BuildAttemptSnafu)?;
+
+    Ok(())
+}
+
+fn build_kit() -> Result<()> {
+    eprintln!("building kit");
+    let manifest_dir: PathBuf = getenv("CARGO_MANIFEST_DIR")?.into();
+    let manifest_file = "Cargo.toml";
+    println!("cargo:rerun-if-changed={}", manifest_file);
+
+    let manifest =
+        ManifestInfo::new(manifest_dir.join(manifest_file)).context(error::ManifestParseSnafu)?;
+
+    supported_arch(&manifest)?;
+
+    if let Some(packages) = manifest.included_packages() {
+        KitBuilder::build(packages).context(error::BuildAttemptSnafu)?;
+    } else {
+        // TODO - this should be an error
+        panic!("cargo:warning=No included packages in manifest. Skipping kit build.");
+    }
 
     Ok(())
 }
