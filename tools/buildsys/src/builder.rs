@@ -294,7 +294,9 @@ struct Build {
     arch: String,
     token: String,
     tag_name: String,
+    no_cache: String,
     output_dir: PathBuf,
+    build_dir: PathBuf,
     build_args: Vec<String>,
 }
 
@@ -303,7 +305,8 @@ impl Build {
         let root = getenv("BUILDSYS_ROOT_DIR")?;
 
         // Compute a per-checkout prefix for the tag to avoid collisions.
-        let mut d = Sha512::new();
+        let mut d
+    tag_name: String, = Sha512::new();
         d.update(&root);
         let digest = hex::encode(d.finalize());
         let token = &digest[..12];
