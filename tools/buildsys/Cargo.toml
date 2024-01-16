@@ -24,3 +24,7 @@ toml = "0.8"
 url = { version = "2", features = ["serde"] }
 walkdir = "2"
 nonzero_ext = "0.3"
+
+[dev-dependencies]
+fs_extra = "1"
+tempfile = "3"

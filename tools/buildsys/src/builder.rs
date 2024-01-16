@@ -9,6 +9,7 @@ use error::Result;
 
 use crate::constants::{SDK_VAR, TOOLCHAIN_VAR};
 use duct::cmd;
+use fs_extra::dir::CopyOptions;
 use lazy_static::lazy_static;
 use nonzero_ext::nonzero;
 use rand::Rng;
@@ -136,7 +137,15 @@ impl PackageBuilder {
             }
         }
 
-        build(BuildType::Package, package, &arch, args, &tag, &output_dir)?;
+        build(
+            BuildType::Package,
+            package,
+            &arch,
+            args,
+            &tag,
+            &output_dir,
+            &PathBuf::from(getenv("BUILDSYS_ROOT_DIR")?),
+        )?;
 
         Ok(Self)
     }
@@ -152,6 +161,10 @@ impl KitBuilder {
         let variant = getenv("BUILDSYS_VARIANT")?;
         let arch = getenv("BUILDSYS_ARCH")?;
 
+        let goarch = serde_plain::from_str::<SupportedArch>(&arch)
+            .context(error::UnsupportedArchSnafu { arch: &arch })?
+            .goarch();
+
         let mut args = Vec::new();
         args.build_arg("PACKAGES", packages.join(" "));
         args.build_arg("ARCH", &arch);
@@ -161,6 +174,7 @@ impl KitBuilder {
         let kit_name = getenv("BUILDSYS_CREATE_KIT")?;
         args.build_arg("KIT_NAME", &kit_name);
         args.build_arg("CORE_KIT_NAME", getenv("BUILDSYS_CORE_KIT_NAME")?);
+        args.build_arg("GOARCH", goarch);
 
         // Always rebuild variants since they are located in a different workspace,
         // and don't directly track changes in the underlying packages.
@@ -176,8 +190,7 @@ impl KitBuilder {
             args,
             &tag,
             &output_dir,
-            PathBuf::from(getenv("BUILDSYS_DOCKERFILES")?).join("Kit.dockerfile"),
-            &getenv("BUILDSYS_ROOT_DIR")?,
+            &PathBuf::from(getenv("BUILDSYS_ROOT_DIR")?),
         )?;
 
         Ok(Self)
@@ -274,7 +287,15 @@ impl VariantBuilder {
             arch = arch
         );
 
-        build(BuildType::Variant, &variant, &arch, args, &tag, &output_dir)?;
+        build(
+            BuildType::Variant,
+            &variant,
+            &arch,
+            args,
+            &tag,
+            &output_dir,
+            &PathBuf::from(getenv("BUILDSYS_ROOT_DIR")?),
+        )?;
 
         Ok(Self)
     }
@@ -284,78 +305,8 @@ impl VariantBuilder {
 
 enum BuildType {
     Package,
+    Kit,
     Variant,
-}
-
-struct Build {
-    root: PathBuf,
-    kind: BuildType,
-    name: String,
-    arch: String,
-    token: String,
-    tag_name: String,
-    no_cache: String,
-    output_dir: PathBuf,
-    build_dir: PathBuf,
-    build_args: Vec<String>,
-}
-
-impl Build {
-    fn new(name: &str, tag_name: &str) -> Result<Self> {
-        let root = getenv("BUILDSYS_ROOT_DIR")?;
-
-        // Compute a per-checkout prefix for the tag to avoid collisions.
-        let mut d
-    tag_name: String, = Sha512::new();
-        d.update(&root);
-        let digest = hex::encode(d.finalize());
-        let token = &digest[..12];
-
-        // Our SDK and toolchain are picked by the external `cargo make` invocation.
-        let sdk = getenv(SDK_VAR)?;
-        let toolchain = getenv(TOOLCHAIN_VAR)?;
-
-        // Avoid using a cached layer from a previous build.
-        let nocache = rand::thread_rng().gen::<u32>();
-
-        // Create a directory for tracking outputs before we move them into position.
-        let build_dir = create_build_dir(&kind, what, arch)?;
-
-        // Clean up any previous outputs we have tracked.
-        clean_build_files(&build_dir, output_dir)?;
-
-        let target = match kind {
-            BuildType::Package => "package",
-            BuildType::Variant => "variant",
-        };
-
-        // Our dockerfile is in the Twoliter tools directory.
-        let twoliter_tools_dir =
-            env::var(TOOLS_DIR).context(error::EnvironmentSnafu { var: TOOLS_DIR })?;
-        let dockerfile = PathBuf::from(twoliter_tools_dir).join("Dockerfile");
-
-        let mut build = format!(
-            "build . \
-        --target {target} \
-        --tag {tag} \
-        --file {dockerfile}",
-            dockerfile = dockerfile.display(),
-            target = target,
-            tag = tag,
-        )
-        .split_string();
-
-        build.extend(build_args);
-        build.build_arg("SDK", sdk);
-        build.build_arg("TOOLCHAIN", toolchain);
-        build.build_arg("NOCACHE", nocache.to_string());
-        // Avoid using a cached layer from a concurrent build in another checkout.
-        build.build_arg("TOKEN", token);
-    }
-
-    fn tag(&self) -> String {
-        format!("{}-{}", self.tag_name, self.token)
-    }
 }
 
 /// Invoke a series of `docker` commands to drive a package or variant build.
@@ -366,6 +317,7 @@ fn build(
     build_args: Vec<String>,
     tag: &str,
     output_dir: &PathBuf,
+    context: &Path,
 ) -> Result<()> {
     let root = getenv("BUILDSYS_ROOT_DIR")?;
     env::set_current_dir(&root).context(error::DirectoryChangeSnafu { path: &root })?;
@@ -375,7 +327,12 @@ fn build(
     d.update(&root);
     let digest = hex::encode(d.finalize());
     let token = &digest[..12];
-    let tag = format!("{}-{}", tag, token);
+
+    let tag = if matches!(kind, BuildType::Kit) {
+        tag.to_string()
+    } else {
+        format!("{}-{}", tag, token)
+    };
 
     // Our SDK and toolchain are picked by the external `cargo make` invocation.
     let sdk = getenv(SDK_VAR)?;
@@ -392,6 +349,7 @@ fn build(
 
     let target = match kind {
         BuildType::Package => "package",
+        BuildType::Kit => "kit",
         BuildType::Variant => "variant",
     };
 
@@ -401,10 +359,11 @@ fn build(
     let dockerfile = PathBuf::from(twoliter_tools_dir).join("Dockerfile");
 
     let mut build = format!(
-        "build . \
+        "build {context} \
         --target {target} \
         --tag {tag} \
         --file {dockerfile}",
+        context = context.display(),
         dockerfile = dockerfile.display(),
         target = target,
         tag = tag,
@@ -544,6 +503,7 @@ fn add_secrets(args: &mut Vec<String>) -> Result<()> {
 fn create_build_dir(kind: &BuildType, name: &str, arch: &str) -> Result<PathBuf> {
     let prefix = match kind {
         BuildType::Package => "packages",
+        BuildType::Kit => "kits",
         BuildType::Variant => "variants",
     };
 
@@ -769,4 +729,68 @@ where
     fn split_string(&self) -> Vec<String> {
         self.as_ref().split(' ').map(String::from).collect()
     }
+}
+
+#[test]
+fn build_kit_test() {
+    use tempfile::TempDir;
+
+    let temp_dir = TempDir::new().unwrap();
+    let project_source = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("tests")
+        .join("projects")
+        .join("local-kit")
+        .canonicalize()
+        .unwrap();
+
+    let embedded_tools_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("..")
+        .join("..")
+        .join("twoliter")
+        .join("embedded")
+        .canonicalize()
+        .unwrap();
+
+    fs_extra::copy_items(&[&project_source], temp_dir.path(), &CopyOptions::default()).unwrap();
+
+    env::set_var("BUILDSYS_OUTPUT_DIR", temp_dir.path().join("build"));
+
+    env::set_var("BUILDSYS_VARIANT", "hello-kit");
+    env::set_var("BUILDSYS_ARCH", "x86_64");
+    env::set_var("BUILDSYS_VERSION_IMAGE", "1.18.0");
+    env::set_var("BUILDSYS_VERSION_BUILD", "abcdef0");
+    env::set_var("BUILDSYS_PRETTY_NAME", "bottlerocket");
+
+    // TODO - rename or remove?
+    env::set_var("BUILDSYS_CREATE_KIT", "hello-kit");
+    env::set_var("BUILDSYS_CORE_KIT_NAME", "bottlerocket-core-kit");
+
+    env::set_var("BUILDSYS_TIMESTAMP", "1705443588");
+    env::set_var("BUILDSYS_ROOT_DIR", temp_dir.path().display().to_string());
+    env::set_var(
+        "TLPRIVATE_SDK_IMAGE",
+        "public.ecr.aws/bottlerocket-sdk/bottlerocket-sdk-x86_64:v0.37.0",
+    );
+    env::set_var(
+        "TLPRIVATE_TOOLCHAIN",
+        "public.ecr.aws/bottlerocket-sdk/bottlerocket-toolchain-x86_64:v0.37.0",
+    );
+    env::set_var(
+        "BUILDSYS_STATE_DIR",
+        temp_dir.path().join("build").join("state"),
+    );
+    env::set_var(
+        "TWOLITER_TOOLS_DIR",
+        embedded_tools_dir.display().to_string(),
+    );
+    env::set_var("X", "");
+    env::set_var("X", "");
+    env::set_var("X", "");
+    env::set_var("X", "");
+    env::set_var("X", "");
+
+    let kit_builder =
+        KitBuilder::build(&["hello-go".to_string(), "hello-agent".to_string()]).unwrap();
 }
