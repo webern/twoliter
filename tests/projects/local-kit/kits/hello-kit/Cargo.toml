@@ -7,7 +7,8 @@ build = "../build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
-[package.metadata.build-kit]
+# TODO - it's weird for this to be in build-variant, move it to it's own structure?
+[package.metadata.build-variant]
 included-packages = [
     # in-tree packages
     "hello-agent",

@@ -39,6 +39,7 @@ pub(crate) struct Buildsys {
 #[derive(Subcommand, Debug)]
 pub(crate) enum Command {
     BuildPackage(Box<BuildPackageArgs>),
+    BuildKit(Box<BuildKitArgs>),
     BuildVariant(Box<BuildVariantArgs>),
 }
 
@@ -46,6 +47,7 @@ impl Command {
     pub(crate) fn build_type(&self) -> BuildType {
         match self {
             Command::BuildPackage(_) => BuildType::Package,
+            Command::BuildKit(_) => BuildType::Kit,
             Command::BuildVariant(_) => BuildType::Variant,
         }
     }
@@ -122,6 +124,29 @@ pub(crate) struct BuildPackageArgs {
     pub(crate) common: Common,
 }
 
+/// Build a kit of RPMs.
+#[derive(Debug, Parser)]
+pub(crate) struct BuildKitArgs {
+    #[arg(long, env = "TLPRIVATE_KIT_NAME")]
+    pub(crate) name: String,
+
+    #[arg(long, env = "BUILDSYS_KITS_DIR")]
+    pub(crate) kits_dir: PathBuf,
+
+    // #[arg(long, env = "BUILDSYS_PRETTY_NAME")]
+    // pub(crate) pretty_name: String,
+    //
+    // #[arg(long, env = "BUILDSYS_VARIANT")]
+    // pub(crate) variant: String,
+    #[arg(long, env = "BUILDSYS_VERSION_BUILD")]
+    pub(crate) version_build: String,
+    #[arg(long, env = "BUILDSYS_VERSION_IMAGE")]
+    pub(crate) version_image: String,
+
+    #[command(flatten)]
+    pub(crate) common: Common,
+}
+
 /// Build filesystem and disk images from RPMs.
 #[derive(Debug, Parser)]
 pub(crate) struct BuildVariantArgs {
@@ -177,6 +202,7 @@ pub(crate) fn rerun_for_envs(build_type: BuildType) {
 #[derive(Debug, Clone, Copy)]
 pub(crate) enum BuildType {
     Package = 0b00000001,
+    Kit = 0b00000100,
     Variant = 0b00000010,
 }
 

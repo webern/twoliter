@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# shellcheck disable=SC2034
+
+set -eu -o pipefail
+shopt -qs failglob
+
+BUILDER_ARCH="$(uname -m)"
+
+for opt in "$@"; do
+   optarg="$(expr "${opt}" : '[^=]*=\(.*\)')"
+   case "${opt}" in
+      --rpm-dir=*) KIT_DIR="${optarg}" ;;
+      --output-dir=*) OUTPUT_DIR="${optarg}" ;;
+   esac
+done
+
+echo "I am the rpm2kit script" > "${OUTPUT_DIR}/output.txt"

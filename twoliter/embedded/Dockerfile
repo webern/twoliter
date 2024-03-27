@@ -219,6 +219,30 @@ RUN --mount=target=/host \
     && createrepo_c /local/rpms \
     && echo ${NOCACHE}
 
+
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Creates an RPM repository from packages created in Section 1.
+FROM repobuild AS kitbuild
+ARG KIT_NAME
+ARG PACKAGES
+ARG ARCH
+ARG NOCACHE
+WORKDIR /root
+
+USER root
+RUN --mount=target=/host \
+    mkdir -p /local/output/${KIT_NAME} \
+    && /host/build/tools/rpm2kit \
+      --rpms-dir=/host/rpms \
+      --output-dir=/local/output/${KIT_NAME} \
+    && echo ${NOCACHE}
+
+# =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
+# Copies RPM packages from the previous stage to their expected location so that buildsys
+# can find them and copy them out.
+FROM scratch AS kit
+COPY --from=kitbuild /local/output/ /output/
+
 # =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^= =^..^=
 # Builds a Bottlerocket image.
 FROM repobuild as imgbuild

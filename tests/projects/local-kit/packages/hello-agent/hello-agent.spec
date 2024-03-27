@@ -14,8 +14,6 @@ URL: https://github.com/bottlerocket-os/bottlerocket
 Source103: hello-agent.service
 Source104: hello-agent.timer
 
-BuildRequires: %{_cross_os}glibc-devel
-
 %description
 %{summary}.
 

@@ -6,7 +6,7 @@ the repository's top-level Dockerfile.
 */
 pub(crate) mod error;
 
-use crate::args::{BuildPackageArgs, BuildType, BuildVariantArgs};
+use crate::args::{BuildKitArgs, BuildPackageArgs, BuildType, BuildVariantArgs};
 use buildsys::manifest::{
     ImageFeature, ImageFormat, ImageLayout, ManifestInfo, PartitionPlan, SupportedArch,
 };
@@ -147,6 +147,26 @@ impl PackageBuildArgs {
     }
 }
 
+struct KitBuildArgs {
+    name: String,
+    packages: String,
+    version_build: String,
+    version_image: String,
+}
+
+impl KitBuildArgs {
+    fn build_args(&self) -> Vec<String> {
+        let mut args = Vec::new();
+        args.push("--network".into());
+        args.push("host".into());
+        args.build_arg("KIT_NAME", &self.name);
+        args.build_arg("PACKAGES", &self.packages);
+        args.build_arg("BUILD_ID", &self.version_build);
+        args.build_arg("VERSION_ID", &self.version_image);
+        args
+    }
+}
+
 struct VariantBuildArgs {
     data_image_publish_size_gib: i32,
     data_image_size_gib: String,
@@ -205,6 +225,7 @@ impl VariantBuildArgs {
 #[allow(clippy::large_enum_variant)]
 enum TargetBuildArgs {
     Package(PackageBuildArgs),
+    Kit(KitBuildArgs),
     Variant(VariantBuildArgs),
 }
 
@@ -212,6 +233,7 @@ impl TargetBuildArgs {
     pub(crate) fn build_type(&self) -> BuildType {
         match self {
             TargetBuildArgs::Package(_) => BuildType::Package,
+            TargetBuildArgs::Kit(_) => BuildType::Kit,
             TargetBuildArgs::Variant(_) => BuildType::Variant,
         }
     }
@@ -276,6 +298,43 @@ impl DockerBuild {
                 variant_runtime: args.variant_runtime,
             }),
             secrets_args: Vec::new(),
+        })
+    }
+
+    /// Create a new `DockerBuild` that can build a variant image.
+    pub(crate) fn new_kit(args: BuildKitArgs, manifest: &ManifestInfo) -> Result<Self> {
+        Ok(Self {
+            dockerfile: args.common.tools_dir.join("Dockerfile"),
+            context: args.common.root_dir.clone(),
+            target: "kit".to_string(),
+            tag: append_token(
+                format!(
+                    "buildsys-kit-{name}-{arch}",
+                    name = args.name,
+                    arch = args.common.arch
+                ),
+                &args.common.root_dir,
+            ),
+            root_dir: args.common.root_dir.clone(),
+            artifacts_dir: args.kits_dir,
+            state_dir: args.common.state_dir,
+            artifact_name: args.name.clone(),
+            common_build_args: CommonBuildArgs::new(
+                &args.common.root_dir,
+                args.common.sdk_image,
+                args.common.arch,
+            ),
+            target_build_args: TargetBuildArgs::Kit(KitBuildArgs {
+                name: args.name,
+                packages: manifest
+                    .included_packages()
+                    .cloned()
+                    .unwrap_or_default()
+                    .join(" "),
+                version_build: args.version_build,
+                version_image: args.version_image,
+            }),
+            secrets_args: secrets_args()?,
         })
     }
 
@@ -432,6 +491,7 @@ impl DockerBuild {
     fn build_args(&self) -> Vec<String> {
         let mut args = match &self.target_build_args {
             TargetBuildArgs::Package(p) => p.build_args(),
+            TargetBuildArgs::Kit(k) => k.build_args(),
             TargetBuildArgs::Variant(v) => v.build_args(),
         };
         args.build_arg("ARCH", self.common_build_args.arch.to_string());
@@ -534,6 +594,7 @@ fn create_marker_dir(
 ) -> Result<PathBuf> {
     let prefix = match kind {
         BuildType::Package => "packages",
+        BuildType::Kit => "kits",
         BuildType::Variant => "variants",
     };
 

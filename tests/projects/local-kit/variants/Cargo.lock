@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "aws-test-1"
-version = "0.1.0"
-dependencies = [
- "hello-agent",
- "hello-go",
-]
-
-[[package]]
 name = "hello-agent"
 version = "0.1.0"
 
@@ -19,9 +11,16 @@ name = "hello-go"
 version = "0.1.0"
 
 [[package]]
-name = "hello-ootb"
+name = "hello-kit"
 version = "0.1.0"
 dependencies = [
  "hello-agent",
  "hello-go",
+]
+
+[[package]]
+name = "hello-ootb"
+version = "0.1.0"
+dependencies = [
+ "hello-kit",
 ]

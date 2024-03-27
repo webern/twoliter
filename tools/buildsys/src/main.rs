@@ -15,7 +15,7 @@ mod gomod;
 mod project;
 mod spec;
 
-use crate::args::{BuildPackageArgs, BuildVariantArgs, Buildsys, Command};
+use crate::args::{BuildKitArgs, BuildPackageArgs, BuildVariantArgs, Buildsys, Command};
 use crate::builder::DockerBuild;
 use buildsys::manifest::{BundleModule, ManifestInfo, SupportedArch};
 use cache::LookasideCache;
@@ -25,7 +25,7 @@ use project::ProjectInfo;
 use snafu::{ensure, ResultExt};
 use spec::SpecInfo;
 use std::path::PathBuf;
-use std::process;
+use std::{env, process};
 
 mod error {
     use buildsys::manifest::SupportedArch;
@@ -34,26 +34,24 @@ mod error {
     #[derive(Debug, Snafu)]
     #[snafu(visibility(pub(super)))]
     pub(super) enum Error {
-        ManifestParse {
-            source: buildsys::manifest::Error,
-        },
+        #[snafu(display("Unable to parse the manifest: {source}"))]
+        ManifestParse { source: buildsys::manifest::Error },
 
-        SpecParse {
-            source: super::spec::error::Error,
-        },
+        #[snafu(display("Unable to parse the spec: {source}"))]
+        SpecParse { source: super::spec::error::Error },
 
-        ExternalFileFetch {
-            source: super::cache::error::Error,
-        },
+        #[snafu(display("Unable to fetch: {source}"))]
+        ExternalFileFetch { source: super::cache::error::Error },
 
-        GoMod {
-            source: super::gomod::error::Error,
-        },
+        #[snafu(display("Problem with Go modules: {source}"))]
+        GoMod { source: super::gomod::error::Error },
 
+        #[snafu(display("Problem crawling project directories: {source}"))]
         ProjectCrawl {
             source: super::project::error::Error,
         },
 
+        #[snafu(display("{source}"))]
         BuildAttempt {
             source: super::builder::error::Error,
         },
@@ -104,6 +102,7 @@ fn run(args: Buildsys) -> Result<()> {
     args::rerun_for_envs(args.command.build_type());
     match args.command {
         Command::BuildPackage(args) => build_package(*args),
+        Command::BuildKit(args) => build_kit(*args),
         Command::BuildVariant(args) => build_variant(*args),
     }
 }
@@ -112,17 +111,29 @@ fn build_package(args: BuildPackageArgs) -> Result<()> {
     let manifest_file = "Cargo.toml";
     println!("cargo:rerun-if-changed={}", manifest_file);
 
-    let variant_manifest_path = args
-        .common
-        .root_dir
-        .join("variants")
-        .join(&args.variant)
-        .join(manifest_file);
-    let variant_manifest =
-        ManifestInfo::new(variant_manifest_path).context(error::ManifestParseSnafu)?;
+    // TODO: eliminate this - we need all packages to be unaware of variant image features
+    // This is here because some packages are sensitive to image features found in a variant's cargo
+    // manifest. This is a problem because we need all packages to work for any variant. Until we
+    // get that done, we will use a default variant manifest when we are building packages kits.
+    let is_kit_build = env::var("TLPRIVATE_HACK_KIT_BUILD").is_ok();
+    let variant_manifest = if is_kit_build {
+        // Use a simple, default "variant" manifest when building packages for a kit.
+        let mut variant_manifest = ManifestInfo::default();
+        variant_manifest.set_supported_arches([SupportedArch::Aarch64, SupportedArch::X86_64]);
+        variant_manifest
+    } else {
+        // Packages are being built for a build-variant command, get the variant attributes.
+        let variant_manifest_path = args
+            .common
+            .root_dir
+            .join("variants")
+            .join(&args.variant)
+            .join(manifest_file);
+        ManifestInfo::new(variant_manifest_path).context(error::ManifestParseSnafu)?
+    };
+
     supported_arch(&variant_manifest, args.common.arch)?;
     let mut image_features = variant_manifest.image_features();
-
     let manifest = ManifestInfo::new(args.common.cargo_manifest_dir.join(manifest_file))
         .context(error::ManifestParseSnafu)?;
     let package_features = manifest.package_features();
@@ -234,6 +245,26 @@ fn build_package(args: BuildPackageArgs) -> Result<()> {
         .context(error::BuilderInstantiationSnafu)?
         .build()
         .context(error::BuildAttemptSnafu)?;
+    Ok(())
+}
+
+fn build_kit(args: BuildKitArgs) -> Result<()> {
+    let manifest_file = "Cargo.toml";
+    println!("cargo:rerun-if-changed={}", manifest_file);
+
+    let manifest = ManifestInfo::new(args.common.cargo_manifest_dir.join(manifest_file))
+        .context(error::ManifestParseSnafu)?;
+
+    supported_arch(&manifest, args.common.arch)?;
+
+    if manifest.included_packages().is_some() {
+        DockerBuild::new_kit(args, &manifest)
+            .context(error::BuilderInstantiationSnafu)?
+            .build()
+            .context(error::BuildAttemptSnafu)?;
+    } else {
+        println!("cargo:warning=No included packages in manifest. Skipping kit build.");
+    }
     Ok(())
 }
 

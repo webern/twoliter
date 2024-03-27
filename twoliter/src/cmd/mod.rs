@@ -1,5 +1,6 @@
 mod build;
 mod build_clean;
+mod build_kit;
 mod debug;
 mod make;
 

@@ -261,7 +261,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 /// The nested structures here are somewhat complex, but they make it trivial
 /// to deserialize the structure we expect to find in the manifest.
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct ManifestInfo {
     package: Package,
@@ -327,6 +327,30 @@ impl ManifestInfo {
             .and_then(|b| b.supported_arches.as_ref())
     }
 
+    /// This overwrites the set of supported arches with those provided.
+    // TODO - this will not be necessary if we can remove all variant sensitivity in package builds
+    pub fn set_supported_arches(
+        &mut self,
+        supported_arches: impl IntoIterator<Item = SupportedArch>,
+    ) {
+        let mut package_metadata = if let Some(metadata) = &self.package.metadata {
+            metadata.clone()
+        } else {
+            Metadata::default()
+        };
+        package_metadata.build_variant =
+            if let Some(build_variant) = &package_metadata.build_variant {
+                let mut build_variant = build_variant.clone();
+                build_variant.supported_arches = Some(supported_arches.into_iter().collect());
+                Some(build_variant)
+            } else {
+                let mut build_variant = BuildVariant::default();
+                build_variant.supported_arches = Some(supported_arches.into_iter().collect());
+                Some(build_variant)
+            };
+        self.package.metadata = Some(package_metadata)
+    }
+
     /// Convenience method to return the kernel parameters for this variant.
     pub fn kernel_parameters(&self) -> Option<&Vec<String>> {
         self.build_variant()
@@ -358,20 +382,20 @@ impl ManifestInfo {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 struct Package {
     metadata: Option<Metadata>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 struct Metadata {
     build_package: Option<BuildPackage>,
     build_variant: Option<BuildVariant>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[allow(dead_code)]
 pub struct BuildPackage {
@@ -383,7 +407,7 @@ pub struct BuildPackage {
     pub package_features: Option<Vec<ImageFeature>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Copy, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 #[serde(untagged)]
 pub enum VariantSensitivity {
@@ -391,7 +415,7 @@ pub enum VariantSensitivity {
     Specific(SensitivityType),
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Copy, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub enum SensitivityType {
     Platform,
@@ -400,7 +424,7 @@ pub enum SensitivityType {
     Flavor,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug, Default)]
 #[serde(rename_all = "kebab-case")]
 pub struct BuildVariant {
     pub included_packages: Option<Vec<String>>,
@@ -412,7 +436,7 @@ pub struct BuildVariant {
     pub image_features: Option<HashMap<ImageFeature, bool>>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Copy, Clone, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum ImageFormat {
     Qcow2,
@@ -569,13 +593,13 @@ impl fmt::Display for ImageFeature {
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Copy, Clone, Debug)]
 #[serde(rename_all = "lowercase")]
 pub enum BundleModule {
     Go,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 #[serde(rename_all = "kebab-case")]
 pub struct ExternalFile {
     pub path: Option<PathBuf>,

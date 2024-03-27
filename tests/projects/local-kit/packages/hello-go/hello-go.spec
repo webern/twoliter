@@ -14,7 +14,6 @@ URL: https://github.com/bottlerocket-os/bottlerocket
 Source103: hello-go.service
 Source104: hello-go.timer
 
-BuildRequires: %{_cross_os}glibc-devel
 Requires: %{_cross_os}hello-go
 
 %description
@@ -25,7 +24,7 @@ Requires: %{_cross_os}hello-go
 cp -r %{_builddir}/sources/hello-go/* .
 
 %build
-%set_cross_go_flags
+%set_cross_go_flags_static
 go build -buildmode=pie -ldflags="${GOLDFLAGS}" -o hello-go ./cmd/hello-go
 
 %install
