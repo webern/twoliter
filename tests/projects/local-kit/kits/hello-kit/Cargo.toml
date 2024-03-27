@@ -15,7 +15,7 @@ included-packages = [
 ]
 
 [lib]
-path = "../kits.rs"
+path = "../kit.rs"
 
 [build-dependencies]
 hello-agent = { path = "../../packages/hello-agent" }
