@@ -1,5 +1,5 @@
 [package]
-name = "hello-kit"
+name = "extra-1-kit"
 version = "0.1.0"
 edition = "2021"
 publish = false
@@ -7,17 +7,15 @@ build = "../build.rs"
 # Don't rebuild crate just because of changes to README.
 exclude = ["README.md"]
 
-# TODO - it's weird for this to be in build-variant, move it to it's own structure?
 [package.metadata.build-variant]
 included-packages = [
-    # in-tree packages
-    "hello-agent",
-    "hello-go",
+    "pkg-b",
+    "pkg-d",
 ]
 
 [lib]
 path = "../kit.rs"
 
 [build-dependencies]
-hello-agent = { path = "../../packages/hello-agent" }
-hello-go = { path = "../../packages/hello-go" }
+pkg-b = { path = "../../packages/pkg-b" }
+pkg-d = { path = "../../packages/pkg-d" }

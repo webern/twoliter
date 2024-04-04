@@ -163,7 +163,7 @@ fn build_system_env_vars() -> Result<Vec<String>> {
 
 /// A list of environment variables that don't conform to naming conventions but need to be passed
 /// through to the `cargo make` invocation.
-const ENV_VARS: [&str; 23] = [
+const ENV_VARS: [&str; 24] = [
     "ALLOW_MISSING_KEY",
     "AMI_DATA_FILE_SUFFIX",
     "CARGO_MAKE_CARGO_ARGS",
@@ -180,6 +180,7 @@ const ENV_VARS: [&str; 23] = [
     "HTTP_PROXY",
     "MARK_OVA_AS_TEMPLATE",
     "NO_PROXY",
+    "PACKAGE",
     "RELEASE_START_TIME",
     "SSM_DATA_FILE_SUFFIX",
     "VMWARE_IMPORT_SPEC_PATH",

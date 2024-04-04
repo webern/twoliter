@@ -15,7 +15,7 @@ xfs-data-partition = true
 systemd-networkd = true
 
 [package.metadata.build-variant]
-included-packages = ["hello-agent", "hello-go"]
+included-packages = ["pkg-a", "pkg-b", "pkg-c", "pkg-d"]
 included-kits = ["hello-kit"]
 kernel-parameters = []
 
@@ -23,4 +23,6 @@ kernel-parameters = []
 path = "../variants.rs"
 
 [build-dependencies]
-hello-kit = { path = "../../kits/hello-kit" }
+core-kit = { path = "../../kits/core-kit" }
+extra-1-kit = { path = "../../kits/extra-1-kit" }
+extra-2-kit = { path = "../../kits/extra-2-kit" }

@@ -1,6 +1,10 @@
 [workspace]
 resolver = "2"
-members = ["hello-kit"]
+members = [
+    "core-kit",
+    "extra-1-kit",
+    "extra-2-kit",
+]
 
 [profile.dev]
 debug = false
