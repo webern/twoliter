@@ -69,7 +69,7 @@ pub(crate) async fn exec(cmd: &mut Command, quiet: bool) -> Result<Option<String
 #[allow(dead_code)]
 pub(crate) mod fs {
     use anyhow::{Context, Result};
-    use std::fs::Metadata;
+    use std::fs::{Metadata, Permissions};
     use std::io::ErrorKind;
     use std::path::{Path, PathBuf};
     use tokio::fs;
@@ -177,6 +177,19 @@ pub(crate) mod fs {
         fs::write(path.as_ref(), contents)
             .await
             .context(format!("Unable to write to '{}'", path.as_ref().display()))
+    }
+
+    pub(crate) async fn set_permissions<P>(path: P, perm: Permissions) -> Result<()>
+    where
+        P: AsRef<Path>,
+    {
+        tokio::fs::set_permissions(path.as_ref(), perm.clone())
+            .await
+            .context(format!(
+                "Unable to set permissions on file '{}' to {:?}",
+                path.as_ref().display(),
+                perm,
+            ))
     }
 }
 
