@@ -2,6 +2,6 @@ schema-version = 1
 release-version = "1.0.0"
 
 [sdk]
-registry = "twoliter.alpha"
-repo = "bottlerocket-sdk"
-tag = "latest"
+registry = "public.ecr.aws/x1d1l4z8"
+repo = "luxgen"
+tag = "v1.19.5-fcf71a"
