@@ -813,6 +813,29 @@ cargo build \
 '''
 ]
 
+# Builds a kit including its dependency packages.
+[tasks.build-kit]
+dependencies = ["check-cargo-version", "fetch", "publish-setup", "fetch-licenses", "cargo-metadata"]
+script_runner = "bash"
+script = [
+'''
+set -e
+if [ -z "${BUILDSYS_KIT}" ]; then
+    echo "The BUILDSYS_KIT environment variable must be set. For example:"
+    echo "cargo make -e BUILDSYS_KIT=core-kit build-kit"
+    exit 1
+fi
+
+export PATH="${TWOLITER_TOOLS_DIR}:${PATH}"
+
+cargo build \
+  ${CARGO_BUILD_ARGS} \
+  ${CARGO_MAKE_CARGO_ARGS} \
+  ${CARGO_MAKE_CARGO_LIMIT_JOBS} \
+  --manifest-path "${BUILDSYS_ROOT_DIR}/kits/${KIT}/Cargo.toml"
+'''
+]
+
 [tasks.build-variant]
 dependencies = ["fetch", "build-sbkeys", "publish-setup", "cargo-metadata"]
 script = [
