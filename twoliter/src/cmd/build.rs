@@ -53,9 +53,8 @@ impl BuildVariant {
     pub(super) async fn run(&self) -> Result<()> {
         let project = project::load_or_find_project(self.project_path.clone()).await?;
         let token = project.token();
-        let toolsdir = project.project_dir().join("build/tools");
+        let toolsdir = project.tools_dir();
         install_tools(&toolsdir).await?;
-        let makefile_path = toolsdir.join("Makefile.toml");
         // A temporary directory in the `build` directory
         let build_temp_dir = TempDir::new_in(project.project_dir())
             .context("Unable to create a tempdir for Twoliter's build")?;
@@ -77,7 +76,7 @@ impl BuildVariant {
             .cp_out(Path::new("twoliter/alpha/build/rpms"), &packages_dir)
             .await?;
 
-        let rpms_dir = project.project_dir().join("build").join("rpms");
+        let rpms_dir = project.rpms_dir();
         fs::create_dir_all(&rpms_dir).await?;
         debug!("Moving rpms to build dir");
         let rpms = packages_dir.join("rpms");
@@ -137,7 +136,7 @@ impl BuildVariant {
                 self.upstream_source_fallback.to_string(),
             )
             .envs(optional_envs.into_iter())
-            .makefile(makefile_path)
+            .makefile(project.makefile())
             .project_dir(project.project_dir())
             .exec("build")
             .await;

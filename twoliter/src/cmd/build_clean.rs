@@ -15,13 +15,12 @@ pub(crate) struct BuildClean {
 impl BuildClean {
     pub(super) async fn run(&self) -> Result<()> {
         let project = project::load_or_find_project(self.project_path.clone()).await?;
-        let toolsdir = project.project_dir().join("build/tools");
+        let toolsdir = project.tools_dir();
         tools::install_tools(&toolsdir).await?;
-        let makefile_path = toolsdir.join("Makefile.toml");
 
         CargoMake::new(&project)?
             .env("TWOLITER_TOOLS_DIR", toolsdir.display().to_string())
-            .makefile(makefile_path)
+            .makefile(project.makefile())
             .project_dir(project.project_dir())
             .exec("clean")
             .await?;

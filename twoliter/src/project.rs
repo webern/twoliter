@@ -94,6 +94,22 @@ impl Project {
         self.project_dir.clone()
     }
 
+    pub(crate) fn build_dir(&self) -> PathBuf {
+        self.project_dir.join("build")
+    }
+
+    pub(crate) fn rpms_dir(&self) -> PathBuf {
+        self.build_dir().join("rpms")
+    }
+
+    pub(crate) fn tools_dir(&self) -> PathBuf {
+        self.build_dir().join("tools")
+    }
+
+    pub(crate) fn makefile(&self) -> PathBuf {
+        self.tools_dir().join("Makefile.toml")
+    }
+
     pub(crate) fn release_version(&self) -> &str {
         self.release_version.as_str()
     }
