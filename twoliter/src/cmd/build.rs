@@ -8,7 +8,6 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use log::debug;
 use std::path::{Path, PathBuf};
-use tempfile::TempDir;
 
 #[derive(Debug, Parser)]
 pub(crate) enum BuildCommand {
@@ -55,10 +54,8 @@ impl BuildVariant {
         let token = project.token();
         let toolsdir = project.tools_dir();
         install_tools(&toolsdir).await?;
-        // A temporary directory in the `build` directory
-        let build_temp_dir = TempDir::new_in(project.project_dir())
-            .context("Unable to create a tempdir for Twoliter's build")?;
-        let packages_dir = build_temp_dir.path().join("sdk_rpms");
+        // Move Alpha SDK RPMs to a temporary directory in the `build` directory
+        let packages_dir = project.temp_dir().join("sdk_rpms");
         fs::create_dir_all(&packages_dir).await?;
 
         let sdk_container = DockerContainer::new(

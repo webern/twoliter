@@ -10,6 +10,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha512};
 use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
+use tempfile::TempDir;
 use toml::Table;
 
 /// Common functionality in commands, if the user gave a path to the `Twoliter.toml` file,
@@ -28,13 +29,15 @@ pub(crate) async fn load_or_find_project(user_path: Option<PathBuf>) -> Result<P
 }
 
 /// Represents the structure of a `Twoliter.toml` project file.
-#[derive(Debug, Clone, Eq, PartialEq, Ord, PartialOrd, Serialize)]
+#[derive(Debug, Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub(crate) struct Project {
     #[serde(skip)]
     filepath: PathBuf,
     #[serde(skip)]
     project_dir: PathBuf,
+    #[serde(skip)]
+    temp_dir: TempDir,
 
     /// The version of this schema struct.
     schema_version: SchemaVersion<1>,
@@ -57,7 +60,7 @@ impl Project {
             "Unable to deserialize project file '{}'",
             path.display()
         ))?;
-        unvalidated.validate(path).await
+        unvalidated.validate_and_build_project(path).await
     }
 
     /// Recursively search for a file named `Twoliter.toml` starting in `dir`. If it is not found,
@@ -96,6 +99,10 @@ impl Project {
 
     pub(crate) fn build_dir(&self) -> PathBuf {
         self.project_dir.join("build")
+    }
+
+    pub(crate) fn temp_dir(&self) -> &Path {
+        self.temp_dir.path()
     }
 
     pub(crate) fn rpms_dir(&self) -> PathBuf {
@@ -186,7 +193,7 @@ struct UnvalidatedProject {
 
 impl UnvalidatedProject {
     /// Constructs a [`Project`] from an [`UnvalidatedProject`] after validating fields.
-    async fn validate(self, path: impl AsRef<Path>) -> Result<Project> {
+    async fn validate_and_build_project(self, path: impl AsRef<Path>) -> Result<Project> {
         let filepath: PathBuf = path.as_ref().into();
         let project_dir = filepath
             .parent()
@@ -197,10 +204,13 @@ impl UnvalidatedProject {
             .to_path_buf();
 
         self.check_release_toml(&project_dir).await?;
+        let build_temp_dir = project_dir.join("build").join(".tmp");
+        fs::create_dir_all(&build_temp_dir).await?;
 
         Ok(Project {
             filepath,
             project_dir,
+            temp_dir: TempDir::new_in(&build_temp_dir)?,
             schema_version: self.schema_version,
             release_version: self.release_version,
             sdk: self.sdk,
@@ -311,6 +321,7 @@ mod test {
         let project = Project {
             filepath: Default::default(),
             project_dir: Default::default(),
+            temp_dir: TempDir::new().unwrap(),
             schema_version: Default::default(),
             release_version: String::from("1.0.0"),
             sdk: Some(ImageUri {

@@ -18,6 +18,7 @@ BUILDSYS_TOOLS_DIR = "${BUILDSYS_ROOT_DIR}/tools"
 BUILDSYS_SOURCES_DIR = "${BUILDSYS_ROOT_DIR}/sources"
 BUILDSYS_SBKEYS_DIR = "${BUILDSYS_ROOT_DIR}/sbkeys"
 BUILDSYS_METADATA_DIR = "${BUILDSYS_BUILD_DIR}/metadata"
+BUILDSYS_TMP_DIR = "${BUILDSYS_BUILD_DIR}/.tmp"
 BUILDSYS_CARGO_METADATA_PATH = "${BUILDSYS_METADATA_DIR}/cargo_metadata.json"
 BUILDSYS_SBKEYS_PROFILE = { script = ['echo "${BUILDSYS_SBKEYS_PROFILE:-local}"'] }
 BUILDSYS_TIMESTAMP = { script = ["date +%s"] }
@@ -284,6 +285,7 @@ mkdir -p ${BUILDSYS_PACKAGES_DIR}
 mkdir -p ${BUILDSYS_KITS_DIR}
 mkdir -p ${BUILDSYS_STATE_DIR}
 mkdir -p ${BUILDSYS_METADATA_DIR}
+mkdir -p ${BUILDSYS_TMP_DIR}
 mkdir -p ${GO_MOD_CACHE}
 '''
 ]
@@ -1540,6 +1542,11 @@ dependencies = [
   "clean-tools",
   "clean-metadata",
   "clean-workspace",
+]
+script = [
+'''
+rm -f "${BUILDSYS_TMP_DIR}"
+'''
 ]
 
 [tasks.clean-sources]
