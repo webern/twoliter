@@ -193,8 +193,8 @@ impl AlphaSdk {
             .context("Unable to copy the sbkeys script from the Alpha SDK")
     }
 
-    async fn cleanup(&self) -> Result<()> {
-        for file_name in &self.created_files {
+    async fn cleanup(objects: Vec<PathBuf>) -> Result<()> {
+        for file_name in objects {
             let added = Path::new(&file_name);
             if added.is_file() {
                 fs::remove_file(added).await?;
@@ -208,11 +208,21 @@ impl AlphaSdk {
 
 impl Drop for AlphaSdk {
     fn drop(&mut self) {
-        let result = Handle::current().block_on(self.cleanup());
+        let handle = Handle::current();
+        let to_delete = self.created_files.clone();
+        let thread = std::thread::spawn(move || {
+            // Using Handle::block_on to run async code in the new thread.
+            handle.block_on(async {
+                match Self::cleanup(to_delete).await {
+                    Ok(_) => (),
+                    // Note: Debug is the correct way to pretty-print anyhow::Error.
+                    Err(e) => error!("Unable to delete Alpha SDK temp objects: {:?}", e),
+                }
+            });
+        });
 
-        if let Err(e) = result {
-            // Note: Debug is the correct way to pretty-print anyhow::Error.
-            error!("Error while cleaning up Alpha SDK artifacts: {:?}", e);
-        }
+        // Ignore the error type from thread.join() which is unusable and means that a panic has
+        // occurred.
+        let _ = thread.join();
     }
 }
