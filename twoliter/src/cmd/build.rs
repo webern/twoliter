@@ -156,16 +156,19 @@ impl AlphaSdk {
     }
 
     async fn copy_rpms(&mut self, project: &Project) -> Result<()> {
+        let container_rpms_dir = Path::new("twoliter/alpha/build/rpms");
+        debug!(
+            "Copying RPMs from container dir '{}' to host dir '{}'",
+            container_rpms_dir.display(),
+            self.temp_packages_dir.display()
+        );
         self.container
-            .cp_out(
-                Path::new("twoliter/alpha/build/rpms"),
-                &self.temp_packages_dir,
-            )
+            .cp_out(container_rpms_dir, &self.temp_packages_dir)
             .await?;
 
         let rpms_dir = project.rpms_dir();
+        debug!("Creating build/rpms dir: '{}'", rpms_dir.display());
         fs::create_dir_all(&rpms_dir).await?;
-        debug!("Moving rpms to build dir");
         let temp_rpms_dir = self.temp_packages_dir.join("rpms");
 
         // TODO - this breaks with per_package dirs
