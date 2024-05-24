@@ -4,4 +4,4 @@ release-version = "1.0.0"
 [sdk]
 registry = "public.ecr.aws/x1d1l4z8"
 repo = "luxgen"
-tag = "v1.19.5-fcf71a"
+tag = "v1.21.0-packagedirs-ad9caf88"
