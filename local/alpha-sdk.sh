@@ -141,7 +141,8 @@ if [ -z "${sdk_version}" ]; then
 fi
 
 if [ "${skip_clean}" = "false" ]; then
-  cargo make clean
+#  cargo make clean
+echo "skipping cargo make clean"
 fi
 
 # We need the sbkeys scripts in a location that is not .dockerignored but is .gitignored
@@ -154,10 +155,11 @@ cp "${bottlerocket_dir}/sbkeys/generate-local-sbkeys" "${bottlerocket_dir}/.carg
 for target_arch in x86_64 aarch64
 do
   for variant in $variants; do
-    cargo make \
-      -e "BUILDSYS_VARIANT=${variant}" \
-      -e "BUILDSYS_ARCH=${target_arch}" \
-      build-variant
+    echo "skipping build of $variant $target_arch"
+#    cargo make \
+#      -e "BUILDSYS_VARIANT=${variant}" \
+#      -e "BUILDSYS_ARCH=${target_arch}" \
+#      build-variant
   done
 done
 
