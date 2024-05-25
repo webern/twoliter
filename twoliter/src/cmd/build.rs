@@ -171,7 +171,6 @@ impl AlphaSdk {
         fs::create_dir_all(&rpms_dir).await?;
         let temp_rpms_dir = self.temp_packages_dir.join("rpms");
 
-        // TODO - this breaks with per_package dirs
         let mut read_dir = tokio::fs::read_dir(&temp_rpms_dir)
             .await
             .context(format!("Unable to read dir '{}'", temp_rpms_dir.display()))?;
@@ -179,8 +178,30 @@ impl AlphaSdk {
             "Error while reading entries in dir '{}'",
             temp_rpms_dir.display()
         ))? {
-            debug!("Moving '{}'", entry.path().display());
-            fs::rename(entry.path(), rpms_dir.join(entry.file_name())).await?;
+            if entry.path().is_dir() {
+                let dir = entry.path();
+                // let dir_name = dir
+                //     .file_name()
+                //     .context(format!("Missing filename in '{}'", dir.display()))?
+                //     .to_str()
+                //     .context(format!("Non UTF-8 encoded path '{}'", dir.display()))?;
+                let mut read_subdir = tokio::fs::read_dir(&dir)
+                    .await
+                    .context(format!("Unable to read dir '{}'", dir.display()))?;
+                while let Some(sub_entry) = read_subdir.next_entry().await.context(format!(
+                    "Error while reading entries in dir '{}'",
+                    dir.display()
+                ))? {
+                    debug!("Moving '{}'", sub_entry.path().display());
+                    let destination_dir = rpms_dir.join("alpha-sdk");
+                    let destination_file = destination_dir.join(sub_entry.file_name());
+                    fs::create_dir_all(&destination_dir).await?;
+                    fs::rename(sub_entry.path(), destination_file).await?;
+                }
+            } else {
+                debug!("Moving '{}'", entry.path().display());
+                fs::rename(entry.path(), rpms_dir.join(entry.file_name())).await?;
+            }
         }
 
         Ok(())

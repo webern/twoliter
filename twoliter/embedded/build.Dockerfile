@@ -132,6 +132,9 @@ RUN \
 
 USER root
 RUN --mount=target=/host \
+    if [ -d /host/build/rpms/alpha-sdk ]; then \
+       ln -s /host/build/rpms/alpha-sdk/*.rpm ./rpmbuild/RPMS ; \
+    fi && \
     for pkg in ${PACKAGE_DEPENDENCIES} ; do \
       ln -s /host/build/rpms/${pkg}/*.rpm ./rpmbuild/RPMS ; \
     done && \
